@@ -83,38 +83,44 @@ void prefsuf_mis (char * dseq,
   long i, j;
 
   /* compute the matrix */
-  for (j = 0; j < dlen; ++j)
-   {
-     h = 0;
-     qa = qarray;
-     for (i = 0; i < qlen; ++i)
-      {
-        n = *qa;
-        h += score_matrix[(dseq[j] << 5) + qseq[i]];
+  for (j = 0; j < dlen; ++j) 
+  {
+    h = 0;
+    qa = qarray;
+    
+    for (i = 0; i < qlen; ++i)
+    {
+      n = *qa;
+      h += score_matrix[(dseq[j] << 5) + qseq[i]];
 
-        *qa++ = h;
-
-        h = n;
-      }
-     *da++ = qarray[qlen - 1];
-   }
+      *qa++ = h;
+      h = n;
+    }
+    
+    *da++ = qarray[qlen - 1];
+  }
 
   /* pick the best values */
   *matchcase = 0;
   for (i = 0, score = qarray[0]; i < qlen; ++i)
-    if (qarray[i] <= score)
-     {
-       len = i;
-       score = qarray[i];
-     }
+  {
+    if (qarray[i] >= score)
+    {
+      len = i;
+      score = qarray[i];
+    }
+  }
 
   for (i = 0; i < dlen; ++i)
-    if (darray[i] <= score)
-     {
-       len = i;
-       score = darray[i];
-       *matchcase = 1;
-     }
+  {
+    if (darray[i] >= score)
+    {
+      len = i;
+      score = darray[i];
+      *matchcase = 1;
+    }
+  }
+  
   *psmscore = score;
   *overlaplen = len;
 }

@@ -45,7 +45,7 @@ extern unsigned int chrmap_2bit[256];
 extern unsigned int chrmap_4bit[256];
 extern char chrmap_complement[256];
 
-/* functions in query.cc */
+/* functions in query.c */
 
 void query_open(const char * filename);
 
@@ -59,7 +59,7 @@ long query_getfilesize();
 
 long query_getfilepos();
 
-/* functions in util.cc */
+/* functions in util.c */
 
 long gcd(long a, long b);
 void fatal(const char * format, ...);
