@@ -132,9 +132,23 @@ int main (int argc, char * argv[])
 
   args_init(argc, argv);
 
-  query_open("file.fa");
+//   query_open("file.fa");
 
   show_header();
+  
+  // print stuff for mapping
+//   int i;
+//   for (i=0; i<256; i++) {
+//     if (i%16==0) fprintf(stdout, "\n    ");
+//     if(i<33 || i>126) {
+//       fprintf(stdout, "-1, ");
+//     } else {
+//       fprintf(stdout, "%c,  ", i);
+//     }
+//   }
+//   fprintf(stdout, "\n\n");
+//   
+  
   
   if (opt_help)
    {
