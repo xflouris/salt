@@ -13,7 +13,7 @@ PROG=salt
 
 DEPS=salt.h Makefile
 
-OBJS=salt.o query.o util.o maps.o
+OBJS=salt.o query.o util.o maps.o score.o
 
 .SUFFIXES:.o .cc
 

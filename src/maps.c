@@ -5,7 +5,7 @@
   fatal symbols: .-
   fatal: ascii 0-26 except tab (9), newline (10 and 13), vt (11), formfeed (12)
   stripped: !"#$&'()+,/0123456789:;<=>?@JO^_`joæøåÆØÅ§¨´ as well as chrs 9-13
-  
+
   includes both amino acid and nucleotide sequences, adapt to nt only
 */
 
@@ -37,7 +37,7 @@ unsigned int chrstatus[256] =
 
 unsigned int chrmap_2bit[256] =
   {
-    /* 
+    /*
        map from ascii to 2-bit code
        A and all others: 0
        C: 1
@@ -45,7 +45,7 @@ unsigned int chrmap_2bit[256] =
        TU: 3
 
     @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
-    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _              
+    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
     */
 
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -67,7 +67,7 @@ unsigned int chrmap_2bit[256] =
   };
 
 
-char map_nt[256] = 
+char map_nt[256] =
  {
    /*
     map from ascii to 4-bit code
@@ -127,11 +127,11 @@ char chrmap_complement[256] =
     'N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N'
   };
 
-unsigned char chrmap_5bit_aa[256] = 
+unsigned char chrmap_5bit_aa[256] =
   {
   /*
     map from ascii to 5-bit code
-    
+
     Code     Name            Abbreviation
 
      1       Alanine         A
