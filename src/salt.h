@@ -66,6 +66,7 @@ long gcd(long a, long b);
 void fatal(const char * format, ...);
 void * xmalloc(size_t size);
 void * xrealloc(void * ptr, size_t size);
+void xfree (void* ptr);
 char * xstrchrnul(char *s, int c);
 unsigned long hash_fnv_1a_64(unsigned char * s, unsigned long n);
 long getusec(void);
@@ -73,7 +74,8 @@ void show_rusage();
 
 /* functions in score.c */
 
-long * score_read_file_aa (const char * filename, unsigned char * chrmap);
-long score (long * score_matrix, int d, int q);
-long score_chrs (long * score_matrix, char d, char q, unsigned char * chrmap);
-void score_matrix_put(long * score_matrix, unsigned char * chrmap);
+void score_chrmap_set(unsigned char * map);
+void score_matrix_read_aa (const char * filename);
+long score_int (int d, int q);
+long score_chr (char d, char q);
+void score_matrix_put();

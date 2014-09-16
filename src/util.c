@@ -42,6 +42,11 @@ void * xrealloc(void *ptr, size_t size)
   return t;
 }
 
+void xfree (void* ptr)
+{
+    free(ptr);
+}
+
 char * xstrchrnul(char *s, int c)
 {
   char * r = strchr(s, c);

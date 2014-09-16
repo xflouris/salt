@@ -148,9 +148,11 @@ int main (int argc, char * argv[])
 //   }
 //   fprintf(stdout, "\n\n");
 //
-  long * sm = score_read_file_aa ("../data/score_matrix", &chrmap_5bit_aa);
-  score_matrix_put(sm, &chrmap_5bit_aa);
-  fprintf(stdout, "%lu\n", score_chrs(sm, 'A', 'C', &chrmap_5bit_aa));
+
+  score_chrmap_set(&chrmap_5bit_aa);
+  score_matrix_read_aa("../data/score_matrix");
+  score_matrix_put();
+  fprintf(stdout, "%lu\n", score_chr('A', 'C'));
 
 
   if (opt_help)

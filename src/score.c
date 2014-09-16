@@ -1,12 +1,24 @@
 #include "salt.h"
 
+static unsigned char * chrmap       = NULL;
+static          long * score_matrix = NULL;
+
 /**
  *
  */
-long * score_read_file_aa (const char * filename, unsigned char * chrmap)
+void score_chrmap_set(unsigned char * val)
+{
+    chrmap = val;
+}
+
+/**
+ *
+ */
+void score_matrix_read_aa (const char * filename)
 {
     // alloc mem for result array
-    long * score_matrix = (long *) xmalloc(32*32*sizeof(long));
+    if (score_matrix) xfree(score_matrix);
+    score_matrix = (long *) xmalloc(32*32*sizeof(long));
 
     // init array
     int i;
@@ -43,13 +55,46 @@ long * score_read_file_aa (const char * filename, unsigned char * chrmap)
     }
 
     fclose(fp);
-    return score_matrix;
 }
 
 /**
  *
  */
-inline long score (long * score_matrix, int d, int q)
+void score_matrix_put()
+{
+    int i,j;
+    fprintf(stdout, "\t\t");
+    for(i=1; i<32; i++) {
+        for(j=32; j<127; j++) {
+            if(chrmap[j] == i) {
+                fprintf(stdout, "%c", j);
+                break;
+            }
+        }
+        fprintf(stdout, "\t");
+    }
+
+    for(i=0; i<32*32; i++) {
+        if (i%32==0) {
+            fprintf(stdout, "\n");
+            for(j=32; j<127; j++) {
+                if(chrmap[j] == i/32) {
+                    fprintf(stdout, "%c", j);
+                    break;
+                }
+            }
+            fprintf(stdout, "\t");
+        }
+
+        fprintf(stdout, "%lu\t", score_matrix[i]);
+    }
+    fprintf(stdout, "\n\n");
+}
+
+/**
+ *
+ */
+inline long score_int (int d, int q)
 {
     return score_matrix[(d << 5) + q];
 }
@@ -57,49 +102,7 @@ inline long score (long * score_matrix, int d, int q)
 /**
  *
  */
-long score_chrs (long * score_matrix, char d, char q, unsigned char * chrmap)
+inline long score_chr (char d, char q)
 {
     return score_matrix[(chrmap[(unsigned char)d] << 5) + chrmap[(unsigned char)q]];
-}
-
-/**
- *
- */
-void score_matrix_put(long * score_matrix, unsigned char * chrmap)
-{
-    int i,j,f;
-    fprintf(stdout, "\t\t");
-    for(i=1; i<32; i++) {
-        f=0;
-        for(j=32; j<127; j++) {
-            if(chrmap[j] == i) {
-                fprintf(stdout, "%c\t", j);
-                f=1;
-                break;
-            }
-        }
-        if(!f) fprintf(stdout, "\t");
-    }
-
-    for(i=0; i<32*32; i++) {
-        if (i%32==0) {
-            fprintf(stdout, "\n");
-            if (i==0) {
-                fprintf(stdout, "\t");
-                continue;
-            }
-            f=0;
-            for(j=32; j<127; j++) {
-                if(chrmap[j] == i/32) {
-                    fprintf(stdout, "%c\t", j);
-                    f=1;
-                    break;
-                }
-            }
-             if(!f) fprintf(stdout, "\t");
-        }
-
-        fprintf(stdout, "%lu\t", score_matrix[i]);
-    }
-    fprintf(stdout, "\n\n");
 }
