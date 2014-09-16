@@ -63,32 +63,32 @@ void score_matrix_read_aa (const char * filename)
 void score_matrix_put()
 {
     int i,j;
-    fprintf(stdout, "\t\t");
+    printf("\t\t");
     for(i=1; i<32; i++) {
         for(j=32; j<127; j++) {
             if(chrmap[j] == i) {
-                fprintf(stdout, "%c", j);
+                printf("%c", j);
                 break;
             }
         }
-        fprintf(stdout, "\t");
+        printf("\t");
     }
 
     for(i=0; i<32*32; i++) {
         if (i%32==0) {
-            fprintf(stdout, "\n");
+            printf("\n");
             for(j=32; j<127; j++) {
                 if(chrmap[j] == i/32) {
-                    fprintf(stdout, "%c", j);
+                    printf("%c", j);
                     break;
                 }
             }
-            fprintf(stdout, "\t");
+            printf("\t");
         }
 
-        fprintf(stdout, "%lu\t", score_matrix[i]);
+        printf("%lu\t", score_matrix[i]);
     }
-    fprintf(stdout, "\n\n");
+    printf("\n\n");
 }
 
 /**
