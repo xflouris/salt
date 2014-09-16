@@ -149,7 +149,7 @@ int main (int argc, char * argv[])
 //   fprintf(stdout, "\n\n");
 //
 
-  score_chrmap_set(&chrmap_5bit_aa);
+  score_chrmap_set(chrmap_5bit_aa);
   score_matrix_read_aa("../data/score_matrix");
   score_matrix_put();
   fprintf(stdout, "%lu\n", score_chr('A', 'C'));
