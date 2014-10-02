@@ -14,7 +14,7 @@ void args_init(int argc, char **argv)
 {
   /* Set defaults */
   progname = argv[0];
- 
+
   opt_help       = 0;
   opt_version    = 0;
   opt_list_reads = 0;
@@ -26,7 +26,7 @@ void args_init(int argc, char **argv)
     {"list-reads", required_argument, 0, 0 },
     { 0, 0, 0, 0 }
   };
-  
+
   int option_index = 0;
   int c;
 
@@ -132,21 +132,40 @@ int main (int argc, char * argv[])
 
   args_init(argc, argv);
 
-  query_open("file.fa");
+//   query_open("file.fa");
 
   show_header();
-  
+
+  // print stuff for mapping
+//   int i;
+//   for (i=0; i<256; i++) {
+//     if (i%16==0) fprintf(stdout, "\n    ");
+//     if(i<33 || i>126) {
+//       fprintf(stdout, "0,  ");
+//     } else {
+//       fprintf(stdout, "%c,  ", i);
+//     }
+//   }
+//   fprintf(stdout, "\n\n");
+//
+
+  score_chrmap_set(chrmap_5bit_aa);
+  score_matrix_read_aa("../data/score_matrix");
+  score_matrix_put();
+  fprintf(stdout, "%lu\n", score_chr('A', 'C'));
+
+
   if (opt_help)
    {
      cmd_help();
    }
   else if (opt_list_reads)
    {
-     while (query_getnext(&head, &head_len, 
+     while (query_getnext(&head, &head_len,
                            &seq, &seq_len, &qno, &qsize))
 
       {
-                             
+
         fprintf(stdout, "%s\n%s\n\n", head, seq);
       }
      query_close();

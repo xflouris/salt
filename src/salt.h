@@ -44,8 +44,9 @@ extern unsigned int chrstatus[256];
 extern unsigned int chrmap_2bit[256];
 extern unsigned int chrmap_4bit[256];
 extern char chrmap_complement[256];
+extern unsigned char chrmap_5bit_aa[256];
 
-/* functions in query.cc */
+/* functions in query.c */
 
 void query_open(const char * filename);
 
@@ -59,13 +60,22 @@ long query_getfilesize();
 
 long query_getfilepos();
 
-/* functions in util.cc */
+/* functions in util.c */
 
 long gcd(long a, long b);
 void fatal(const char * format, ...);
 void * xmalloc(size_t size);
 void * xrealloc(void * ptr, size_t size);
+void xfree (void* ptr);
 char * xstrchrnul(char *s, int c);
 unsigned long hash_fnv_1a_64(unsigned char * s, unsigned long n);
 long getusec(void);
 void show_rusage();
+
+/* functions in score.c */
+
+void score_chrmap_set(unsigned char * map);
+void score_matrix_read_aa (const char * filename);
+long score_int (int d, int q);
+long score_chr (char d, char q);
+void score_matrix_put();

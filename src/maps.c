@@ -5,7 +5,7 @@
   fatal symbols: .-
   fatal: ascii 0-26 except tab (9), newline (10 and 13), vt (11), formfeed (12)
   stripped: !"#$&'()+,/0123456789:;<=>?@JO^_`joæøåÆØÅ§¨´ as well as chrs 9-13
-  
+
   includes both amino acid and nucleotide sequences, adapt to nt only
 */
 
@@ -37,7 +37,7 @@ unsigned int chrstatus[256] =
 
 unsigned int chrmap_2bit[256] =
   {
-    /* 
+    /*
        map from ascii to 2-bit code
        A and all others: 0
        C: 1
@@ -45,7 +45,7 @@ unsigned int chrmap_2bit[256] =
        TU: 3
 
     @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
-    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _              
+    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
     */
 
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -67,7 +67,7 @@ unsigned int chrmap_2bit[256] =
   };
 
 
-char map_nt[256] = 
+char map_nt[256] =
  {
    /*
     map from ascii to 4-bit code
@@ -125,4 +125,51 @@ char chrmap_complement[256] =
     'N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N',
     'N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N',
     'N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N'
+  };
+
+unsigned char chrmap_5bit_aa[256] =
+  {
+  /*
+    map from ascii to 5-bit code
+
+    Code     Name            Abbreviation
+
+     1       Alanine         A
+     2       Cysteine        C
+     3       Aspartic Acid   D
+     4       Glutamic Acid   E
+     5       Phenylalanine   F
+     6       Glycine         G
+     7       Histidine       H
+     8       Isoleucine      I
+     9       Lysine          K
+    10       Leucine         L
+    11       Methionine      M
+    12       Asparagine      N
+    13       Proline         P
+    14       Glutamine       Q
+    15       Arginine        R
+    16       Serine          S
+    17       Threonine       T
+    18       Valine          V
+    19       Tryptophan      W
+    20       Tyrosine        Y
+    31       Stop Codons     .
+  */
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 31,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  1,  0,  2,  3,  4,  5,  6,  7,  8,  0,  9, 10, 11, 12,  0,
+    13, 14, 15, 16, 17,  0, 18, 19,  0, 20,  0,  0,  0,  0,  0,  0,
+     0,  1,  0,  2,  3,  4,  5,  6,  7,  8,  0,  9, 10, 11, 12,  0,
+    13, 14, 15, 16, 17,  0, 18, 19,  0, 20,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
   };
