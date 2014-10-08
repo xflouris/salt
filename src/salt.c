@@ -262,6 +262,28 @@ int main (int argc, char * argv[])
 
   show_header();
 
+<<<<<<< HEAD
+=======
+  // print stuff for mapping
+//   int i;
+//   for (i=0; i<256; i++) {
+//     if (i%16==0) fprintf(stdout, "\n    ");
+//     if(i<33 || i>126) {
+//       fprintf(stdout, "0,  ");
+//     } else {
+//       fprintf(stdout, "%c,  ", i);
+//     }
+//   }
+//   fprintf(stdout, "\n\n");
+//
+
+  //score_chrmap_set(chrmap_5bit_aa);
+  //score_matrix_read_aa("../data/score_matrix");
+  //score_matrix_put();
+  //fprintf(stdout, "%lu\n", score_chr('A', 'C'));
+
+
+>>>>>>> minor changes
   if (opt_help)
   {
     cmd_help();

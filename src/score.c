@@ -21,21 +21,23 @@
 
 #include "salt.h"
 
-static unsigned char * chrmap       = NULL;
-static          long * score_matrix = NULL;
+static unsigned char *chrmap       = NULL;
+static          long *score_matrix = NULL;
 
 /**
  *
  */
-void score_chrmap_set(unsigned char * val)
+void score_chrmap_set(unsigned char *val)
 {
     chrmap = val;
 }
 
 /**
- *
+ * expects a file format where each line contains a
+ * value of the matrix like "A C 10" to indicate that
+ * the score between A and C is 10
  */
-void score_matrix_read_aa (const char * filename)
+void score_matrix_read_aa (const char *filename)
 {
     // alloc mem for result array
     if (score_matrix) xfree(score_matrix);
@@ -48,15 +50,20 @@ void score_matrix_read_aa (const char * filename)
     }
 
     // open file with scores
-    FILE * fp;
+    FILE *fp;
     if(!(fp = fopen(filename, "r"))) {
         fatal("Cannot open file %s for reading.", filename);
     }
 
+<<<<<<< HEAD
     // init vars for line reading
     char * line = (char *) xmalloc(LINE_MAX * sizeof(char), SALT_ALIGNMENT_SSE);
+=======
+     //init vars for line reading
+    char *line = (char *) xmalloc(LINE_MAX *sizeof(char));
+>>>>>>> minor changes
     char del[] = " \t\n";
-    char * in1, * in2, * in3;
+    char *in1, *in2, *in3;
     int pos;
 
     // iterate over lines of file
