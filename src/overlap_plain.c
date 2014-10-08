@@ -33,39 +33,22 @@
 
 */
 
-unsigned long qarray_alloc = 0;
-unsigned long darray_alloc = 0;
+static unsigned long qarray_alloc = 0;
+static unsigned long darray_alloc = 0;
 
-unsigned long * qarray;
-unsigned long * darray;
+static unsigned long * qarray;
+static unsigned long * darray;
 
-void prefsuf_mis_init()
+void salt_overlap_plain(char * dseq,
+                        char * dend,
+                        char * qseq,
+                        char * qend,
+                        long * score_matrix,
+                        long * psmscore,
+                        long * overlaplen,
+                        long * matchcase)
 {
-  qarray = 0;
-  darray = 0;
-
-  qarray_alloc = 0;
-  darray_alloc = 0;
-}
-
-void prefsuf_mis_exit()
-{
-  if (qarray)
-    free(qarray);
-  if (darray)
-    free(darray);
-}
-
-void prefsuf_mis (char * dseq,
-                  char * dend,
-                  char * qseq,
-                  char * qend,
-                  long * score_matrix,
-                  long * psmscore,
-                  long * overlaplen,
-                  long * matchcase)
-{
-  long h, n, score, len;
+  long i, j, h, n, score, len = 0;
   unsigned long *qa, *da;
 
   long dlen = dend - dseq;
@@ -79,8 +62,6 @@ void prefsuf_mis (char * dseq,
   da = darray;
 
   memset (qarray, 0, qarray_alloc);
-
-  long i, j;
 
   /* compute the matrix */
   for (j = 0; j < dlen; ++j) 
@@ -100,22 +81,23 @@ void prefsuf_mis (char * dseq,
     *da++ = qarray[qlen - 1];
   }
 
-  /* pick the best values */
+  /* pick the best overlap in non run-through case*/
   *matchcase = 0;
   for (i = 0, score = qarray[0]; i < qlen; ++i)
   {
     if (qarray[i] >= score)
     {
-      len = i;
+      len = i+1;
       score = qarray[i];
     }
   }
 
+  /* check the run-through case */
   for (i = 0; i < dlen; ++i)
   {
     if (darray[i] >= score)
     {
-      len = i;
+      len = i+1;
       score = darray[i];
       *matchcase = 1;
     }

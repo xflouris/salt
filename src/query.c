@@ -7,6 +7,35 @@
 #define MEMCHUNK 4096
 #define LINEALLOC LINE_MAX
 
+typedef struct
+{
+  FILE * query_fp;
+  char query_line[LINEALLOC];
+
+  long query_no;
+
+  char * query_head;
+  char * query_seq;
+
+  long query_head_len;
+  long query_seq_len;
+
+  long query_head_alloc;
+  long query_seq_alloc;
+
+  long query_filesize;
+
+  long query_lineno;
+
+  long query_stripped_count;
+  long query_stripped[256];
+
+  regex_t q_regexp; 
+} salt_FASTA;
+
+static salt_FASTA * open_files = NULL;
+static int open_files_count = 0;
+/*
 extern unsigned int chrstatus[256];
 
 static FILE * query_fp;
@@ -31,116 +60,141 @@ static long query_stripped_count;
 static long query_stripped[256];
 
 regex_t q_regexp;
+*/
 
-long query_getfilesize()
+static void init_open_files(int index)
 {
-  return query_filesize;
+  open_files = xrealloc((void *)open_files, index * sizeof(salt_FASTA));
+
+  open_files[index-1].query_no   = -1;
+  open_files[index-1].query_head =  0;
+  open_files[index-1].query_seq  =  0;
+
+  open_files[index-1].query_head_len =  0;
+  open_files[index-1].query_seq_len  =  0;
+
+  open_files[index-1].query_head_alloc =  0;
+  open_files[index-1].query_seq_alloc  =  0;
+
+  open_files[index-1].query_filesize =  0;
 }
 
-long query_getfilepos()
+long salt_fasta_getfilesize(int id)
 {
-  return ftell(query_fp);
+  return open_files[id].query_filesize;
 }
 
-void query_open(const char * filename)
+long salt_fasta_getfilepos(int id)
 {
-  if (regcomp(&q_regexp, "(^|;)size=([0-9]+)(;|$)", REG_EXTENDED))
+  return ftell(open_files[id].query_fp);
+}
+
+int salt_fasta_open(const char * filename)
+{
+  init_open_files(++open_files_count);
+
+  if (regcomp(&(open_files[open_files_count - 1].q_regexp), 
+              "(^|;)size=([0-9]+)(;|$)", 
+              REG_EXTENDED))
     fatal("Regular expression compilation failed");
   
   //unsigned long query_line_len;
   /* allocate space */
 
-  query_head = NULL;
-  query_seq = NULL;
+  open_files[open_files_count - 1].query_head = NULL;
+  open_files[open_files_count - 1].query_seq = NULL;
 
-  query_head_len = 0;
-  query_seq_len = 0;
+  open_files[open_files_count - 1].query_head_len = 0;
+  open_files[open_files_count - 1].query_seq_len = 0;
 
-  query_head_alloc = MEMCHUNK;
-  query_seq_alloc = MEMCHUNK;
+  open_files[open_files_count - 1].query_head_alloc = MEMCHUNK;
+  open_files[open_files_count - 1].query_seq_alloc = MEMCHUNK;
 
-  query_head = (char *) xmalloc((size_t)query_head_alloc);
-  query_seq = (char *) xmalloc((size_t)query_seq_alloc);
+  open_files[open_files_count - 1].query_head = (char *) xmalloc((size_t)(open_files[open_files_count - 1].query_head_alloc), SALT_ALIGNMENT_SSE);
+  open_files[open_files_count - 1].query_seq = (char *) xmalloc((size_t)(open_files[open_files_count - 1].query_seq_alloc), SALT_ALIGNMENT_SSE);
 
-  query_no = -1;
+  open_files[open_files_count - 1].query_no = -1;
 
   /* open query file */
-  query_fp = NULL;
-  query_fp = fopen(filename, "r");
-  if (!query_fp)
+  open_files[open_files_count - 1].query_fp = NULL;
+  open_files[open_files_count - 1].query_fp = fopen(filename, "r");
+  if (!open_files[open_files_count - 1].query_fp)
     fatal("Error: Unable to open query file (%s)", filename);
 
-  if (fseek(query_fp, 0, SEEK_END))
+  if (fseek(open_files[open_files_count - 1].query_fp, 0, SEEK_END))
     fatal("Error: Unable to seek in query file (%s)", filename);
 
-  query_filesize = ftell(query_fp);
+  open_files[open_files_count - 1].query_filesize = ftell(open_files[open_files_count - 1].query_fp);
   
-  rewind(query_fp);
+  rewind(open_files[open_files_count - 1].query_fp);
 
-  query_line[0] = 0;
-  fgets(query_line, LINEALLOC, query_fp);
-  query_lineno = 1;
+  open_files[open_files_count - 1].query_line[0] = 0;
+  fgets(open_files[open_files_count - 1].query_line, LINEALLOC, open_files[open_files_count - 1].query_fp);
+  open_files[open_files_count - 1].query_lineno = 1;
 
-  query_stripped_count = 0;
+  open_files[open_files_count - 1].query_stripped_count = 0;
   for(int i=0; i<256; i++)
-    query_stripped[i] = 0;
+    open_files[open_files_count - 1].query_stripped[i] = 0;
+
+  return open_files_count - 1;
 }
 
-void query_close()
+void salt_fasta_close(int id)
 {
   /* Warn about stripped chars */
 
-  if (query_stripped_count)
+  if (open_files[id].query_stripped_count)
     {
       fprintf(stderr, "Warning: invalid characters stripped from query:");
       for (int i=0; i<256;i++)
-        if (query_stripped[i])
-          fprintf(stderr, " %c(%ld)", i, query_stripped[i]);
+        if (open_files[id].query_stripped[i])
+          fprintf(stderr, " %c(%ld)", i, open_files[id].query_stripped[i]);
       fprintf(stderr, "\n");
     }
   
-  fclose(query_fp);
+  fclose(open_files[id].query_fp);
   
-  if (query_seq)
-    free(query_seq);
-  if (query_head)
-    free(query_head);
+  if (open_files[id].query_seq)
+    free(open_files[id].query_seq);
+  if (open_files[id].query_head)
+    free(open_files[id].query_head);
 
-  query_head = 0;
-  query_seq = 0;
+  open_files[id].query_head = 0;
+  open_files[id].query_seq = 0;
 }
 
-int query_getnext(char ** head, long * head_len,
-                  char ** seq, long * seq_len, long * qno,
-                  long * qsize)
+int salt_fasta_getnext(int id, char ** head, long * head_len,
+                       char ** seq, long * seq_len, long * qno,
+                       long * qsize)
 {
   char msg[200];
-  while (query_line[0])
+  while (open_files[id].query_line[0])
     {
       /* read header */
 
-      if (query_line[0] != '>')
+      if (open_files[id].query_line[0] != '>')
         fatal("Illegal header line in query fasta file");
       
-      long headerlen = xstrchrnul(query_line+1, '\n') - (query_line+1);
-      query_head_len = headerlen;
+      long headerlen = xstrchrnul(open_files[id].query_line+1, '\n') - (open_files[id].query_line+1);
+      open_files[id].query_head_len = headerlen;
 
-      if (headerlen + 1 > query_head_alloc)
+      if (headerlen + 1 > open_files[id].query_head_alloc)
         {
-          query_head_alloc = headerlen + 1;
-          query_head = (char *) xrealloc(query_head, (size_t)query_head_alloc);
+          open_files[id].query_head_alloc = headerlen + 1;
+          open_files[id].query_head = (char *) xrealloc(open_files[id].query_head, 
+                                                        (size_t)(open_files[id].query_head_alloc));
         }
 
-      memcpy(query_head, query_line + 1, (size_t)headerlen);
-      query_head[headerlen] = 0;
+      memcpy(open_files[id].query_head, open_files[id].query_line + 1, (size_t)headerlen);
+      open_files[id].query_head[headerlen] = 0;
 
       /* read size/abundance annotation */
 
       regmatch_t pmatch[4];
 
-      if (!regexec(&q_regexp, query_head, 4, pmatch, 0))
+      if (!regexec(&(open_files[id].q_regexp), open_files[id].query_head, 4, pmatch, 0))
         {
-          unsigned long size = atol(query_head + pmatch[2].rm_so);
+          unsigned long size = atol(open_files[id].query_head + pmatch[2].rm_so);
           if (size > 0)
             * qsize = size;
           else
@@ -151,19 +205,19 @@ int query_getnext(char ** head, long * head_len,
 
       /* get next line */
 
-      query_line[0] = 0;
-      fgets(query_line, LINEALLOC, query_fp);
-      query_lineno++;
+      open_files[id].query_line[0] = 0;
+      fgets(open_files[id].query_line, LINEALLOC, open_files[id].query_fp);
+      open_files[id].query_lineno++;
 
       /* read sequence */
 
-      query_seq_len = 0;
+      open_files[id].query_seq_len = 0;
 
-      while (query_line[0] && (query_line[0] != '>'))
+      while (open_files[id].query_line[0] && (open_files[id].query_line[0] != '>'))
         {
           char c;
           char m;
-          char * p = query_line;
+          char * p = open_files[id].query_line;
 
           while((c = *p++))
             {
@@ -172,28 +226,28 @@ int query_getnext(char ** head, long * head_len,
                 {
                 case 0:
                   /* character to be stripped */
-                  query_stripped_count++;
-                  query_stripped[(int)c]++;
+                  open_files[id].query_stripped_count++;
+                  open_files[id].query_stripped[(int)c]++;
                   break;
 
                 case 1:
                   /* legal character */
-                  if (query_seq_len + 1 > query_seq_alloc)
+                  if (open_files[id].query_seq_len + 1 > open_files[id].query_seq_alloc)
                     {
-                      query_seq_alloc += MEMCHUNK;
-                      query_seq = (char *) xrealloc(query_seq, (size_t)query_seq_alloc);
+                      open_files[id].query_seq_alloc += MEMCHUNK;
+                      open_files[id].query_seq = (char *) xrealloc(open_files[id].query_seq, (size_t)(open_files[id].query_seq_alloc));
                     }
-                  *(query_seq + query_seq_len) = c;
-                  query_seq_len++;
+                  *(open_files[id].query_seq + open_files[id].query_seq_len) = c;
+                  open_files[id].query_seq_len++;
 
                   break;
 
                 case 2:
                   /* fatal character */
                   if (c>=32)
-                    snprintf(msg, 200, "illegal character '%c' on line %ld in the query file", c, query_lineno);
+                    snprintf(msg, 200, "illegal character '%c' on line %ld in the query file", c, open_files[id].query_lineno);
                   else
-                    snprintf(msg, 200, "illegal unprintable character %#.2x (hexadecimal) on line %ld in the query file", c, query_lineno);
+                    snprintf(msg, 200, "illegal unprintable character %#.2x (hexadecimal) on line %ld in the query file", c, open_files[id].query_lineno);
                   fatal(msg);
                   break;
 
@@ -204,29 +258,29 @@ int query_getnext(char ** head, long * head_len,
                 }
             }
 
-          query_line[0] = 0;
-          fgets(query_line, LINEALLOC, query_fp);
-          query_lineno++;
+          open_files[id].query_line[0] = 0;
+          fgets(open_files[id].query_line, LINEALLOC, open_files[id].query_fp);
+          open_files[id].query_lineno++;
         }
 
       /* add zero after sequence */
 
-      if (query_seq_len + 1 > query_seq_alloc)
+      if (open_files[id].query_seq_len + 1 > open_files[id].query_seq_alloc)
         {
-          query_seq_alloc += MEMCHUNK;
-          query_seq = (char *) xrealloc(query_seq, (size_t)query_seq_alloc);
+          open_files[id].query_seq_alloc += MEMCHUNK;
+          open_files[id].query_seq = (char *) xrealloc(open_files[id].query_seq, (size_t)open_files[id].query_seq_alloc);
         }
-      *(query_seq + query_seq_len) = 0;
+      *(open_files[id].query_seq + open_files[id].query_seq_len) = 0;
 
 
 
 
-      query_no++;
-      *head = query_head;
-      *seq = query_seq;
-      *head_len = query_head_len;
-      *seq_len = query_seq_len;
-      *qno = query_no;
+      open_files[id].query_no++;
+      *head = open_files[id].query_head;
+      *seq = open_files[id].query_seq;
+      *head_len = open_files[id].query_head_len;
+      *seq_len = open_files[id].query_seq_len;
+      *qno = open_files[id].query_no;
 
       return 1;
     }

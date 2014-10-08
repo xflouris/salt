@@ -12,6 +12,11 @@ long gcd(long a, long b)
   }
 }
 
+long roundup(long offset, long step)
+{
+  return ((offset - 1) | (step - 1)) + 1;
+}
+
 void fatal(const char * format, ...)
 {
   va_list argptr;
@@ -22,9 +27,8 @@ void fatal(const char * format, ...)
   exit(1);
 }
 
-void * xmalloc(size_t size)
+void * xmalloc(size_t size, const size_t alignment)
 {
-  const size_t alignment = 16;
   void * t;
   posix_memalign(& t, alignment, size);
 
@@ -55,4 +59,13 @@ char * xstrchrnul(char *s, int c)
     return r;
   else
     return (char *)s + strlen(s);
+}
+
+void * xstrdup(char * s)
+{
+  int len = strlen(s);
+  char * x = xmalloc(len+1, 8);
+  strcpy(x,s);
+  x[len]=0;
+  return x;
 }

@@ -18,7 +18,7 @@ void score_matrix_read_aa (const char * filename)
 {
     // alloc mem for result array
     if (score_matrix) xfree(score_matrix);
-    score_matrix = (long *) xmalloc(32*32*sizeof(long));
+    score_matrix = (long *) xmalloc(32*32*sizeof(long), SALT_ALIGNMENT_SSE);
 
     // init array
     int i;
@@ -33,7 +33,7 @@ void score_matrix_read_aa (const char * filename)
     }
 
     // init vars for line reading
-    char * line = (char *) xmalloc(LINE_MAX * sizeof(char));
+    char * line = (char *) xmalloc(LINE_MAX * sizeof(char), SALT_ALIGNMENT_SSE);
     char del[] = " \t\n";
     char * in1, * in2, * in3;
     int pos;
