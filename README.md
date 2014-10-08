@@ -29,6 +29,17 @@ Although this should be a library in the end, we should develop separate testbed
 
 **Optimal prefix-suffix matching (mismatches)**: Same as SW, but since the only dependency in the cells computation is the upper-left diagonal, we don't need the the three variations of the problem. For this one we should code only a highly-optimized single-to-single sequence comparison.
 
+## SALT Toolkit command line options
+
+General options:
+
+* `--help`
+* `--version`
+
+Merging reads:
+
+* `--overlap <filename>`
+
 ## SALT license and third party licenses
 
 The code is currently licensed under the GNU Affero General Public License version 3.
@@ -36,7 +47,6 @@ The code is currently licensed under the GNU Affero General Public License versi
 SALT binaries may include code from the [zlib](http://www.zlib.net) library copyright Jean-loup Gailly and Mark Adler.
 
 SALT binaries may include code from the [bzip2](http://www.bzip.org) library copyright Julian R. Seward.
-
 
 ## Code
 
@@ -52,6 +62,9 @@ The code is written in C++ but most of it is actually C with some C++ syntax con
 **salt.c** | Toolkit file, for testing the functions of SALT.
 **util.c** | Various common utility functions.
 
+## Bugs
+
+SALT has not been tested comprehensively yet. All bug reports are highly appreciated.
 
 
 ## The SALT team
