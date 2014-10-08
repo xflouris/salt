@@ -55,13 +55,8 @@ void score_matrix_read_aa (const char *filename)
         fatal("Cannot open file %s for reading.", filename);
     }
 
-<<<<<<< HEAD
     // init vars for line reading
     char * line = (char *) xmalloc(LINE_MAX * sizeof(char), SALT_ALIGNMENT_SSE);
-=======
-     //init vars for line reading
-    char *line = (char *) xmalloc(LINE_MAX *sizeof(char));
->>>>>>> minor changes
     char del[] = " \t\n";
     char *in1, *in2, *in3;
     int pos;

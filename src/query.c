@@ -51,7 +51,7 @@ typedef struct
   long query_stripped_count;
   long query_stripped[256];
 
-  regex_t q_regexp; 
+  regex_t q_regexp;
 } salt_FASTA;
 
 static salt_FASTA * open_files = NULL;
@@ -114,8 +114,8 @@ int salt_fasta_open(const char * filename)
 {
   init_open_files(++open_files_count);
 
-  if (regcomp(&(open_files[open_files_count - 1].q_regexp), 
-              "(^|;)size=([0-9]+)(;|$)", 
+  if (regcomp(&(open_files[open_files_count - 1].q_regexp),
+              "(^|;)size=([0-9]+)(;|$)",
               REG_EXTENDED))
     fatal("Regular expression compilation failed");
 
@@ -145,15 +145,9 @@ int salt_fasta_open(const char * filename)
   if (fseek(open_files[open_files_count - 1].query_fp, 0, SEEK_END))
     fatal("Error: Unable to seek in query file (%s)", filename);
 
-<<<<<<< HEAD
   open_files[open_files_count - 1].query_filesize = ftell(open_files[open_files_count - 1].query_fp);
-  
-  rewind(open_files[open_files_count - 1].query_fp);
-=======
-  query_filesize = ftell(query_fp);
 
-  rewind(query_fp);
->>>>>>> minor changes
+  rewind(open_files[open_files_count - 1].query_fp);
 
   open_files[open_files_count - 1].query_line[0] = 0;
   fgets(open_files[open_files_count - 1].query_line, LINEALLOC, open_files[open_files_count - 1].query_fp);
@@ -178,23 +172,13 @@ void salt_fasta_close(int id)
           fprintf(stderr, " %c(%ld)", i, open_files[id].query_stripped[i]);
       fprintf(stderr, "\n");
     }
-<<<<<<< HEAD
-  
+
   fclose(open_files[id].query_fp);
-  
+
   if (open_files[id].query_seq)
     free(open_files[id].query_seq);
   if (open_files[id].query_head)
     free(open_files[id].query_head);
-=======
-
-  fclose(query_fp);
-
-  if (query_seq)
-    free(query_seq);
-  if (query_head)
-    free(query_head);
->>>>>>> minor changes
 
   open_files[id].query_head = 0;
   open_files[id].query_seq = 0;
@@ -211,20 +195,14 @@ int salt_fasta_getnext(int id, char ** head, long * head_len,
 
       if (open_files[id].query_line[0] != '>')
         fatal("Illegal header line in query fasta file");
-<<<<<<< HEAD
-      
+
       long headerlen = xstrchrnul(open_files[id].query_line+1, '\n') - (open_files[id].query_line+1);
       open_files[id].query_head_len = headerlen;
-=======
-
-      long headerlen = xstrchrnul(query_line+1, '\n') - (query_line+1);
-      query_head_len = headerlen;
->>>>>>> minor changes
 
       if (headerlen + 1 > open_files[id].query_head_alloc)
         {
           open_files[id].query_head_alloc = headerlen + 1;
-          open_files[id].query_head = (char *) xrealloc(open_files[id].query_head, 
+          open_files[id].query_head = (char *) xrealloc(open_files[id].query_head,
                                                         (size_t)(open_files[id].query_head_alloc));
         }
 

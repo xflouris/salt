@@ -181,7 +181,7 @@ void cmd_overlap()
   /* convert to a number representation */
   convert(seq[0]);
   convert(seq[1]);
-  
+
   salt_overlap_plain(seq[0], seq[0] + seq_len[0],
                      seq[1], seq[1] + seq_len[1],
                      (long *)scorematrix,
@@ -262,8 +262,6 @@ int main (int argc, char * argv[])
 
   show_header();
 
-<<<<<<< HEAD
-=======
   // print stuff for mapping
 //   int i;
 //   for (i=0; i<256; i++) {
@@ -282,8 +280,6 @@ int main (int argc, char * argv[])
   //score_matrix_put();
   //fprintf(stdout, "%lu\n", score_chr('A', 'C'));
 
-
->>>>>>> minor changes
   if (opt_help)
   {
     cmd_help();
