@@ -146,6 +146,15 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
                                long * overlaplen,
                                long * matchcase);
 
+void salt_overlap_plain8_sse (BYTE * dseq,
+                              BYTE * dend,
+                              BYTE * qseq,
+                              BYTE * qend,
+                              char * score_matrix,
+                              long * psmscore,
+                              long * overlaplen,
+                              long * matchcase);
+
 /* functions in popcount.c */
 
 void pprint(__m128i x);
