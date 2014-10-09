@@ -1,4 +1,4 @@
-# SALT
+# SALT (Sequence Analysis Library and Toolkit)
 
 ## Introduction
 
