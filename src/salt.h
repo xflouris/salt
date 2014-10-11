@@ -82,7 +82,7 @@ int salt_fasta_open(const char * filename);
 
 int salt_fasta_getnext(int id, char ** head, long * head_len,
                   char ** seq, long * seq_len, long * qno,
-		  long * qsize);
+          long * qsize);
 
 void salt_fasta_close(int id);
 
@@ -158,3 +158,8 @@ void salt_overlap_plain8_sse (BYTE * dseq,
 /* functions in popcount.c */
 
 void pprint(__m128i x);
+
+/* functions in gen_test.c */
+
+void generate_sequence (char* seq, int len);
+void generate_pair (char* seq1, int len1, char* seq2, int len2, int overlap);

@@ -13,7 +13,7 @@ PROG=salt
 
 DEPS=salt.h Makefile
 
-OBJS=salt.o query.o util.o maps.o score.o popcount.o overlap_plain.o overlap_plain_vec.o
+OBJS=salt.o query.o util.o maps.o score.o popcount.o overlap_plain.o overlap_plain_vec.o gen_test.o
 
 .SUFFIXES:.o .cc
 

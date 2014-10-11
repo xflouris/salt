@@ -71,10 +71,10 @@ static WORD * qprofile_fill16_avx(WORD * score_matrix_word,
   {
     for (long j = 0; j < qlen; ++j)
     {
-      offset[j] = score_matrix_word[(i << 5) + qseq[j]]; 
+      offset[j] = score_matrix_word[(i << 5) + qseq[j]];
     }
     for (long j = qlen; j < padded_len; ++j)
-    {  
+    {
       offset[j] = 0;
     }
   }
@@ -98,10 +98,10 @@ static WORD * qprofile_fill16_sse(WORD * score_matrix_word,
   {
     for (long j = 0; j < qlen; ++j)
     {
-      offset[j] = score_matrix_word[(i << 5) + qseq[j]]; 
+      offset[j] = score_matrix_word[(i << 5) + qseq[j]];
     }
     for (long j = qlen; j < padded_len; ++j)
-    {  
+    {
       offset[j] = 0;
     }
   }
@@ -210,7 +210,7 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
 
        xmm1 = _mm256_permute2x128_si256(H,H, _MM_SHUFFLE(0,0,0,3));
        xmm4 = _mm256_and_si256(xmm1, xmm3);
-       T1 = _mm256_alignr_epi8(xmm4,xmm0,0x1e); 
+       T1 = _mm256_alignr_epi8(xmm4,xmm0,0x1e);
 
        xmm4 = _mm256_and_si256(xmm1, xmm2);
        H    = _mm256_alignr_epi8(H,xmm4,16-2);
@@ -225,6 +225,36 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
      }
   }
 
+  // create a vector M that contains per position the max of
+  // all vectors of the last column
+  __m256i M  = _mm256_load_si256((__m256i *)(hh));
+  for (offset = 16; offset < qlen_padded; offset += 16) {
+        H = _mm256_load_si256((__m256i *)(hh+offset));
+        M = _mm256_max_epi16 (H, M);
+  }
+
+  // store M into array m
+  WORD * m = qprofile;//xmalloc(16*sizeof(WORD), SALT_ALIGNMENT_AVX);
+  _mm256_store_si256((__m256i *)(m),M);
+
+  // find max of m
+  WORD max = m[0];
+  for (int i = 1; i < 16; i++) {
+      if (m[i] > max) max = m[i];
+  }
+
+  // now find the first position in hh that contains this max
+  for (long i = 0; i < qlen; ++i) {
+      if (hh[i] == max) {
+          *overlaplen = i+1;
+          *psmscore   = max;
+          *matchcase  = 0;
+          return;
+      }
+  }
+
+  // never executed
+
   *matchcase = 0;
   score = hh[0];
   for (long i = 0; i < qlen; ++i)
@@ -238,7 +268,7 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
 
   *psmscore = score;
   *overlaplen = len;
-  
+
 }
 
 void salt_overlap_plain16_sse (BYTE * dseq,
@@ -282,7 +312,7 @@ void salt_overlap_plain16_sse (BYTE * dseq,
     for (offset = 0; offset < qlen_padded; offset += 8)
      {
        H  = _mm_load_si128((__m128i *)(hh+offset));
-       
+
        T1 = _mm_srli_si128(H,14);
        H  = _mm_slli_si128(H,2);
        H  = _mm_or_si128(H,X);
@@ -295,7 +325,7 @@ void salt_overlap_plain16_sse (BYTE * dseq,
      }
   }
 
-  /* pick the best values 
+  /* pick the best values
      TODO: vectorize it */
   *matchcase = 0;
   score = hh[0];
@@ -310,7 +340,7 @@ void salt_overlap_plain16_sse (BYTE * dseq,
 
   *psmscore = score;
   *overlaplen = len;
-  
+
 }
 
 static char * qprofile_fill8_sse(char * score_matrix_byte,
@@ -330,10 +360,10 @@ static char * qprofile_fill8_sse(char * score_matrix_byte,
   {
     for (long j = 0; j < qlen; ++j)
     {
-      offset[j] = score_matrix_byte[(i << 5) + qseq[j]]; 
+      offset[j] = score_matrix_byte[(i << 5) + qseq[j]];
     }
     for (long j = qlen; j < padded_len; ++j)
-    {  
+    {
       offset[j] = 0;
     }
   }
@@ -379,7 +409,7 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
     for (offset = 0; offset < qlen_padded; offset += 16)
      {
        H  = _mm_load_si128((__m128i *)(hh+offset));
-       
+
        T1 = _mm_srli_si128(H,15);
        H  = _mm_slli_si128(H,1);
        H  = _mm_or_si128(H,X);
@@ -392,7 +422,7 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
      }
   }
 
-  /* pick the best values 
+  /* pick the best values
      TODO: vectorize it */
   *matchcase = 0;
   score = hh[0];
@@ -407,5 +437,5 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
 
   *psmscore = score;
   *overlaplen = len;
-  
+
 }

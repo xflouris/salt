@@ -175,32 +175,46 @@ void cmd_overlap()
         scorematrix[(i<<5) + j] = 0;
       }
 
-  printf (" d : %s len: %ld\n", seq[0], seq_len[0]);
+ /*
+  * =======================================================================
+  *
+  *
+  *
+  * test snipped for generating test data (overwrites data from file)
+  *
+  *
+  *
+  * =======================================================================
+  */
+  generate_pair (seq[0], seq_len[0], seq[1], seq_len[1], 40);
+
+  printf ("dbs: %s len: %ld\n", seq[0], seq_len[0]);
   printf ("qry: %s len: %ld\n", seq[1], seq_len[1]);
 
   /* convert to a number representation */
   convert(seq[0]);
   convert(seq[1]);
 
-  salt_overlap_plain(seq[0], seq[0] + seq_len[0],
-                     seq[1], seq[1] + seq_len[1],
-                     (long *)scorematrix,
-                     &psmscore,
-                     &overlaplen,
-                     &matchcase);
+  //salt_overlap_plain(seq[0], seq[0] + seq_len[0],
+  //                   seq[1], seq[1] + seq_len[1],
+  //                   (long *)scorematrix,
+  //                   &psmscore,
+  //                   &overlaplen,
+  //                   &matchcase);
 
 
-  printf("\n CPU: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
+  //printf("\n CPU: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
 
-  salt_overlap_plain16_sse((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
-                           (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
-                           scorematrix_word,
-                           &psmscore,
-                           &overlaplen,
-                           &matchcase);
+  //salt_overlap_plain16_sse((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
+  //                         (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
+  //                         scorematrix_word,
+  //                         &psmscore,
+  //                         &overlaplen,
+  //                         &matchcase);
 
-  printf("SSE3: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
+  //printf("SSE3: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
 
+  //~ for (long k = 0; k < 5000000; ++k)
   salt_overlap_plain16_avx2((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                             (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                             scorematrix_word,
@@ -261,24 +275,6 @@ int main (int argc, char * argv[])
   args_init(argc, argv);
 
   show_header();
-
-  // print stuff for mapping
-//   int i;
-//   for (i=0; i<256; i++) {
-//     if (i%16==0) fprintf(stdout, "\n    ");
-//     if(i<33 || i>126) {
-//       fprintf(stdout, "0,  ");
-//     } else {
-//       fprintf(stdout, "%c,  ", i);
-//     }
-//   }
-//   fprintf(stdout, "\n\n");
-//
-
-  //score_chrmap_set(chrmap_5bit_aa);
-  //score_matrix_read_aa("../data/score_matrix");
-  //score_matrix_put();
-  //fprintf(stdout, "%lu\n", score_chr('A', 'C'));
 
   if (opt_help)
   {
