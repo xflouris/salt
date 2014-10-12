@@ -458,7 +458,7 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
 
        _mm_store_si128((__m128i *)(hh+i),H);
      }
-    *(ee+j)    = *lastbyte;
+    *(ee+j) = *lastbyte;
   }
   
 
@@ -488,7 +488,6 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
   
   *psmscore = score;
   *overlaplen = len;
-
 }
                       
 void salt_overlap_plain8_sse2(BYTE * dseq, BYTE * dend,

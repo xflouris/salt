@@ -148,13 +148,6 @@ SALT_EXPORT void salt_overlap_plain(char * dseq, char * dend,
 
 /* functions in overlap_plain_vec.c */
 
-SALT_EXPORT void salt_overlap_plain16_sse(BYTE * dseq, BYTE * dend,
-                                          BYTE * qseq, BYTE * qend,
-                                          WORD * score_matrix,
-                                          long * pmscore,
-                                          long * overlaplen,
-                                          long * matchcase);
-
 SALT_EXPORT void salt_overlap_plain16_avx(BYTE * dseq, BYTE * dend,
                                           BYTE * qseq, BYTE * qend,
                                           WORD * score_matrix,
@@ -170,6 +163,17 @@ SALT_EXPORT void salt_overlap_plain16_avx2(BYTE * dseq,
                                            long * psmscore,
                                            long * overlaplen,
                                            long * matchcase);
+
+/* functions in overlap_plain_sse16.c */
+
+SALT_EXPORT void salt_overlap_plain16_sse(BYTE * dseq, BYTE * dend,
+                                          BYTE * qseq, BYTE * qend,
+                                          WORD * score_matrix,
+                                          long * pmscore,
+                                          long * overlaplen,
+                                          long * matchcase);
+
+/* functions in overlap_plain_sse8.c */
 
 SALT_EXPORT void salt_overlap_plain8_sse (BYTE * dseq,
                                           BYTE * dend,
