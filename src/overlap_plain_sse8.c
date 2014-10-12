@@ -53,18 +53,31 @@
              aligned with a suffix of query.
 
 */
+static char * qprofile = NULL;
+static char * hh = NULL;
+static char * ee = NULL;
 
-static char * qprofile_fill8_sse(char * score_matrix_byte,
+static long qprofile_len = 0;
+static long ee_len = 0;
+static long hh_len = 0;
+
+#if 0
+/* original non-vectorized version that does not require aligned memory */
+static void qprofile_fill8_sse(char * score_matrix_byte,
                                  BYTE * qseq,
                                  BYTE * qend)
 {
-  char * qprofile;
   char * offset;
   long qlen = qend - qseq;
   long padded_len = roundup(qlen, 16);
   long i;
 
-  qprofile = xmalloc(4*padded_len*sizeof(char), SALT_ALIGNMENT_SSE);
+  if (padded_len > qprofile_len)
+  {
+    free(qprofile);
+    qprofile = xmalloc(4*padded_len*sizeof(char), SALT_ALIGNMENT_SSE);
+    qprofile_len = padded_len;
+  }
 
   /* currently only for DNA with A,C,G,T as 0,1,2,3 */
   for (i = 0, offset = qprofile; i < 4; offset += padded_len, i++)
@@ -79,6 +92,67 @@ static char * qprofile_fill8_sse(char * score_matrix_byte,
     }
   }
   return qprofile;
+}
+#endif
+
+/* TODO: Note requires aligned memory for the read */
+static void qprofile_fill8_sse(char * score_matrix_byte,
+                               BYTE * qseq,
+                               BYTE * qend)
+{
+  long qlen = qend - qseq;
+  long padded_len = roundup(qlen, 16);
+
+  __m128i xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,   xmm7;
+  __m128i xmm8, xmm9, xmm10, xmm11, xmm12;
+
+  if (padded_len > qprofile_len)
+  {
+    free(qprofile);
+    qprofile = xmalloc(4*padded_len*sizeof(char), SALT_ALIGNMENT_SSE);
+    qprofile_len = padded_len;
+  }
+  
+  /* mask */
+  xmm0 = _mm_set_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+                      0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01);
+
+  /* scoring matrix */
+  xmm1 = _mm_load_si128((__m128i *)(score_matrix_byte+0));  /* A */
+  xmm2 = _mm_load_si128((__m128i *)(score_matrix_byte+32)); /* C */
+  xmm3 = _mm_load_si128((__m128i *)(score_matrix_byte+64)); /* G */
+  xmm4 = _mm_load_si128((__m128i *)(score_matrix_byte+96)); /* T */
+
+  /* pack 16 8-bit values of scoring matrix into one register */
+  xmm1 = _mm_unpacklo_epi32(xmm1,xmm2);
+  xmm2 = _mm_unpacklo_epi32(xmm3,xmm4);
+  xmm3 = _mm_unpacklo_epi64(xmm1,xmm2);
+
+  for (long i = 0; i < padded_len; i += 16)
+  {
+    /* load sequence */
+    xmm5 = _mm_load_si128((__m128i *)(qseq+i));
+
+    /* left shift 16 values by 2 */
+    xmm5 = _mm_add_epi8(xmm5,xmm5);
+    xmm5 = _mm_add_epi8(xmm5,xmm5);
+
+    xmm6 = _mm_add_epi8(xmm5,xmm0);
+    xmm7 = _mm_add_epi8(xmm6,xmm0);
+    xmm8 = _mm_add_epi8(xmm7,xmm0);
+
+    /* shuffle */
+    xmm9  = _mm_shuffle_epi8(xmm3, xmm5);
+    xmm10 = _mm_shuffle_epi8(xmm3, xmm6);
+    xmm11 = _mm_shuffle_epi8(xmm3, xmm7);
+    xmm12 = _mm_shuffle_epi8(xmm3, xmm8);
+
+    /* store qprofile vectors */
+    _mm_store_si128((__m128i *)(qprofile+0*padded_len+i),xmm9);
+    _mm_store_si128((__m128i *)(qprofile+1*padded_len+i),xmm10);
+    _mm_store_si128((__m128i *)(qprofile+2*padded_len+i),xmm11);
+    _mm_store_si128((__m128i *)(qprofile+3*padded_len+i),xmm12);
+  }
 }
 
 void pprint_sse8(__m128i x)
@@ -246,10 +320,7 @@ void pshow_sse8(char * name, __m128i x)
   }
 
 static void donormal8(BYTE * dseq, BYTE * qseq,
-                      long dlen,long qlen,
-                      char * qprofile,
-                      char * hh,
-                      char * ee)
+                      long dlen,long qlen)
 {
   long qlen_padded = roundup(qlen,16);
   long dlen16 = (dlen >> 4) << 4;
@@ -339,25 +410,35 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
   long dlen = dend - dseq;
   long qlen = qend - qseq;
   long qlen_padded = roundup(qlen,16);
-  char * qprofile;
   char c;
   
   __m128i xmm0, X, H, T1, xmm1;
 
   xmm0 = _mm_setzero_si128();
 
-  char * hh = xmalloc(qlen_padded*sizeof(char), SALT_ALIGNMENT_SSE);
-  char * ee = xmalloc(roundup(dlen,16)*sizeof(char), SALT_ALIGNMENT_SSE);
+  if (qlen_padded > hh_len)
+  {
+    free(hh);
+    hh = xmalloc(qlen_padded*sizeof(char), SALT_ALIGNMENT_SSE);
+    hh_len = qlen_padded;
+  }
+  if (dlen > ee_len)
+  {
+    free(ee);
+    ee = xmalloc(roundup(dlen,16)*sizeof(char), SALT_ALIGNMENT_SSE);
+    ee_len = dlen;
+  }
 
   for (long i = 0; i < qlen_padded; i += 16)
   {
     _mm_store_si128((__m128i *)(hh + i), xmm0);
   }
 
-  char * offset = hh+qlen-1;
-  qprofile = qprofile_fill8_sse(score_matrix,
-                                 qseq,
-                                 qend);
+  char * lastbyte= hh+qlen-1;
+
+  qprofile_fill8_sse(score_matrix,
+                     qseq,
+                     qend);
 
   for (long j = 0; j < dlen; ++j)
   {
@@ -377,7 +458,7 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
 
        _mm_store_si128((__m128i *)(hh+i),H);
      }
-    *(ee+j)    = *offset;
+    *(ee+j)    = *lastbyte;
   }
   
 
@@ -408,13 +489,9 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
   *psmscore = score;
   *overlaplen = len;
 
-  free(hh);
-  free(ee);
-  
 }
                       
-
-void salt_overlap_plain8_sse2 (BYTE * dseq, BYTE * dend,
+void salt_overlap_plain8_sse2(BYTE * dseq, BYTE * dend,
                               BYTE * qseq, BYTE * qend,
                               char * score_matrix,
                               long * psmscore,
@@ -427,19 +504,26 @@ void salt_overlap_plain8_sse2 (BYTE * dseq, BYTE * dend,
   long qlen = qend - qseq;
   long qlen_padded = roundup(qlen,16);
   long dlen16 = (dlen >> 4) << 4;
-  char * qprofile;
 
-  char * hh = xmalloc(qlen_padded*sizeof(char), SALT_ALIGNMENT_SSE);
-  char * ee = xmalloc(roundup(dlen,16)*sizeof(char), SALT_ALIGNMENT_SSE);
+  if (qlen_padded > hh_len)
+  {
+    free(hh);
+    hh = xmalloc(qlen_padded*sizeof(char), SALT_ALIGNMENT_SSE);
+    hh_len = qlen_padded;
+  }
+  if (dlen > ee_len)
+  {
+    free(ee);
+    ee = xmalloc(roundup(dlen,16)*sizeof(char), SALT_ALIGNMENT_SSE);
+    ee_len = dlen;
+  }
 
-  qprofile = qprofile_fill8_sse(score_matrix,
-                                 qseq,
-                                 qend);
+  qprofile_fill8_sse(score_matrix,
+                     qseq,
+                     qend);
 
   donormal8(dseq, qseq,
-                 dlen, qlen,
-                 qprofile,
-                 hh, ee);
+            dlen, qlen);
   
 
   /* pick the best values 
@@ -468,8 +552,4 @@ void salt_overlap_plain8_sse2 (BYTE * dseq, BYTE * dend,
   
   *psmscore = score;
   *overlaplen = len;
-
-  free(hh);
-  free(ee);
-  
 }

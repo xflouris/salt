@@ -82,11 +82,17 @@ char * xstrchrnul(char *s, int c)
     return (char *)s + strlen(s);
 }
 
+/* TODO: separate it into xstrdup and xstrdup_aligned */
 void * xstrdup(char * s)
 {
   int len = strlen(s);
-  char * x = xmalloc(len+1, 8);
+  //char * x = xmalloc(len+1, 8);
+  char * x = xmalloc(roundup(len,16)+1, 16);
   strcpy(x,s);
-  x[len]=0;
+
+  /* zero out remaining bytes */
+  for (long i = len; i < roundup(len,16); ++i)
+    x[i] = 0;
+
   return x;
 }

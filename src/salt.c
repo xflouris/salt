@@ -195,7 +195,6 @@ void cmd_overlap()
 
   printf("\n CPU: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
 
-
   salt_overlap_plain8_sse((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                           (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                           scorematrix_char,
@@ -204,6 +203,7 @@ void cmd_overlap()
                           &matchcase);
 
   printf("SSE8: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
+
   salt_overlap_plain16_sse((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                            (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                            scorematrix_word,
