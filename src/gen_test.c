@@ -7,7 +7,7 @@
 #include "salt.h"
 
 char  cmap[] = {'A',  'C',  'G',  'T'};
-float cprb[] = {0.25, 0.25, 0.25, 0.25};
+float cprb[] = {0.25, 0.25, 0.25, 0.25}; // sum must be 1
 #define CLEN 4
 
 /*
@@ -21,7 +21,7 @@ inline float random_float ()
 /*
  * Returns a random char from the cmap, with probs given by cprb.
  */
-inline char random_char ()
+char random_char ()
 {
     float s = 0.0;
     float r = random_float();
@@ -34,7 +34,7 @@ inline char random_char ()
         }
     }
 
-    // get rid of compiler warning.
+    // make compiler happy.
     // this case should not occur as long as the sum of cprb is 1
     return cmap[CLEN-1];
 }
