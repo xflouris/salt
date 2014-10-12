@@ -5,7 +5,7 @@
 WARN=-Wall
 
 CC = gcc
-CFLAGS=-g -std=c99 -O3 -mavx2 -mtune=core2 $(WARN) $(PROFILING)
+CFLAGS=-g -std=c99 -O3 -mtune=core2 $(WARN) $(PROFILING)
 LINKFLAGS=-g
 #LIBS=-lpthread
 
@@ -13,12 +13,13 @@ PROG=salt
 
 DEPS=salt.h Makefile
 
-OBJS=salt.o query.o util.o maps.o score.o popcount.o overlap_plain.o overlap_plain_vec.o gen_test.o
+OBJS=salt.o query.o util.o maps.o score.o popcount.o overlap_plain.o overlap_plain_vec.o overlap_plain_sse8.o gen_test.o
 
-.SUFFIXES:.o .cc
+.SUFFIXES:.o .c
 
 %.o : %.c $(DEPS)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -mavx2 -c -o $@ $<
+
 
 all: $(PROG)
 

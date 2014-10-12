@@ -44,6 +44,15 @@
 #include <sys/sysinfo.h>
 #endif
 
+/* platform specific */
+
+#ifdef _WIN32
+#define SALT_EXPORT __declspec(dllexport)
+#else
+#define SALT_EXPORT
+#endif
+
+
 /* constants */
 
 #define PROG_NAME "salt"
@@ -76,90 +85,118 @@ extern unsigned int chrmap_4bit[256];
 extern char chrmap_complement[256];
 extern unsigned char chrmap_5bit_aa[256];
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* functions in query.c */
 
-int salt_fasta_open(const char * filename);
+SALT_EXPORT int salt_fasta_open(const char * filename);
 
-int salt_fasta_getnext(int id, char ** head, long * head_len,
+SALT_EXPORT int salt_fasta_getnext(int id, char ** head, long * head_len,
                   char ** seq, long * seq_len, long * qno,
-          long * qsize);
+		  long * qsize);
 
-void salt_fasta_close(int id);
+SALT_EXPORT void salt_fasta_close(int id);
 
-long salt_fasta_getfilesize(int id);
+SALT_EXPORT long salt_fasta_getfilesize(int id);
 
-long salt_fasta_getfilepos(int id);
+SALT_EXPORT long salt_fasta_getfilepos(int id);
 
 /* functions in util.c */
 
-long gcd(long a, long b);
-long roundup(long offset, long step);
-void fatal(const char * format, ...);
-void * xmalloc(size_t size, size_t alignment);
-void * xrealloc(void * ptr, size_t size);
-void xfree (void* ptr);
-char * xstrchrnul(char *s, int c);
-unsigned long hash_fnv_1a_64(unsigned char * s, unsigned long n);
-long getusec(void);
-void show_rusage();
-void * xstrdup(char * s);
+SALT_EXPORT long gcd(long a, long b);
+
+SALT_EXPORT long roundup(long offset, long step);
+
+SALT_EXPORT void fatal(const char * format, ...);
+
+SALT_EXPORT void * xmalloc(size_t size, size_t alignment);
+
+SALT_EXPORT void * xrealloc(void * ptr, size_t size);
+
+SALT_EXPORT void xfree (void* ptr);
+
+SALT_EXPORT char * xstrchrnul(char *s, int c);
+
+SALT_EXPORT long getusec(void);
+
+SALT_EXPORT void show_rusage();
+
+SALT_EXPORT void * xstrdup(char * s);
 
 /* functions in score.c */
 
-void score_chrmap_set(unsigned char * map);
-void score_matrix_read_aa (const char * filename);
-long score_int (int d, int q);
-long score_chr (char d, char q);
-void score_matrix_put();
+SALT_EXPORT void score_chrmap_set(unsigned char * map);
+
+SALT_EXPORT void score_matrix_read_aa (const char * filename);
+
+SALT_EXPORT long score_int (int d, int q);
+
+SALT_EXPORT long score_chr (char d, char q);
+
+SALT_EXPORT void score_matrix_put();
 
 /* functions in overlap_plain.c */
 
-void salt_overlap_plain(char * dseq, char * dend,
-                        char * qseq, char * qend,
-                        long * score_matrix,
-                        long * psmscore,
-                        long * overlaplen,
-                        long * matchcase);
+SALT_EXPORT void salt_overlap_plain(char * dseq, char * dend,
+                                    char * qseq, char * qend,
+                                    long * score_matrix,
+                                    long * psmscore,
+                                    long * overlaplen,
+                                    long * matchcase);
 
 /* functions in overlap_plain_vec.c */
 
-void salt_overlap_plain16_sse(BYTE * dseq, BYTE * dend,
-                              BYTE * qseq, BYTE * qend,
-                              WORD * score_matrix,
-                              long * pmscore,
-                              long * overlaplen,
-                              long * matchcase);
+SALT_EXPORT void salt_overlap_plain16_sse(BYTE * dseq, BYTE * dend,
+                                          BYTE * qseq, BYTE * qend,
+                                          WORD * score_matrix,
+                                          long * pmscore,
+                                          long * overlaplen,
+                                          long * matchcase);
 
-void salt_overlap_plain16_avx(BYTE * dseq, BYTE * dend,
-                              BYTE * qseq, BYTE * qend,
-                              WORD * score_matrix,
-                              long * psmscore,
-                              long * overlaplen,
-                              long * matchcase);
+SALT_EXPORT void salt_overlap_plain16_avx(BYTE * dseq, BYTE * dend,
+                                          BYTE * qseq, BYTE * qend,
+                                          WORD * score_matrix,
+                                          long * psmscore,
+                                          long * overlaplen,
+                                          long * matchcase);
 
-void salt_overlap_plain16_avx2(BYTE * dseq,
-                               BYTE * dend,
-                               BYTE * qseq,
-                               BYTE * qend,
-                               WORD * score_matrix,
-                               long * psmscore,
-                               long * overlaplen,
-                               long * matchcase);
+SALT_EXPORT void salt_overlap_plain16_avx2(BYTE * dseq,
+                                           BYTE * dend,
+                                           BYTE * qseq,
+                                           BYTE * qend,
+                                           WORD * score_matrix,
+                                           long * psmscore,
+                                           long * overlaplen,
+                                           long * matchcase);
 
-void salt_overlap_plain8_sse (BYTE * dseq,
-                              BYTE * dend,
-                              BYTE * qseq,
-                              BYTE * qend,
-                              char * score_matrix,
-                              long * psmscore,
-                              long * overlaplen,
-                              long * matchcase);
+SALT_EXPORT void salt_overlap_plain8_sse (BYTE * dseq,
+                                          BYTE * dend,
+                                          BYTE * qseq,
+                                          BYTE * qend,
+                                          char * score_matrix,
+                                          long * psmscore,
+                                          long * overlaplen,
+                                          long * matchcase);
 
+SALT_EXPORT void salt_overlap_plain8_sse2(BYTE * dseq,
+                                          BYTE * dend,
+                                          BYTE * qseq,
+                                          BYTE * qend,
+                                          char * score_matrix,
+                                          long * psmscore,
+                                          long * overlaplen,
+                                          long * matchcase);
 /* functions in popcount.c */
 
-void pprint(__m128i x);
+SALT_EXPORT void pprint(__m128i x);
 
 /* functions in gen_test.c */
 
 void generate_sequence (char* seq, int len);
 void generate_pair (char* seq1, int len1, char* seq2, int len2, int overlap);
+
+#ifdef __cplusplus
+}
+#endif

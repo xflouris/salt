@@ -57,8 +57,8 @@
 static unsigned long qarray_alloc = 0;
 static unsigned long darray_alloc = 0;
 
-static unsigned long * qarray;
-static unsigned long * darray;
+static long * qarray;
+static long * darray;
 
 void salt_overlap_plain(char * dseq,
                         char * dend,
@@ -70,7 +70,7 @@ void salt_overlap_plain(char * dseq,
                         long * matchcase)
 {
   long i, j, h, n, score, len = 0;
-  unsigned long *qa, *da;
+  long *qa, *da;
 
   long dlen = dend - dseq;
   long qlen = qend - qseq;
@@ -78,8 +78,8 @@ void salt_overlap_plain(char * dseq,
   qarray_alloc = qlen * sizeof(long);
   darray_alloc = dlen * sizeof(long);
 
-  qarray = (unsigned long *) xrealloc(qarray, qarray_alloc);
-  darray = (unsigned long *) xrealloc(darray, darray_alloc);
+  qarray = (long *) xrealloc(qarray, qarray_alloc);
+  darray = (long *) xrealloc(darray, darray_alloc);
   da = darray;
 
   memset (qarray, 0, qarray_alloc);
