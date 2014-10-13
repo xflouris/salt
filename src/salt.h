@@ -95,7 +95,7 @@ SALT_EXPORT int salt_fasta_open(const char * filename);
 
 SALT_EXPORT int salt_fasta_getnext(int id, char ** head, long * head_len,
                   char ** seq, long * seq_len, long * qno,
-		  long * qsize);
+          long * qsize);
 
 SALT_EXPORT void salt_fasta_close(int id);
 

@@ -6,12 +6,40 @@
 #include <assert.h>
 #include "salt.h"
 
+// characters and their probs to use for generating sequences
 char  cmap[] = {'A',  'C',  'G',  'T'};
 float cprb[] = {0.25, 0.25, 0.25, 0.25}; // sum must be 1
-#define CLEN 4
+#define CLEN 4 // num of elements in above lists
 
 /*
- * Returns a random float.
+ * Returns min of the ints
+ */
+inline int min (int a, int b)
+{
+    return a < b ? a : b;
+}
+
+/*
+ * Returns a random int within range [0, n).
+ *
+ * It makes sure that numbers are equally distributed in the range.
+ */
+int random_int (int n)
+{
+    if ((n - 1) == RAND_MAX) {
+        return rand();
+    } else {
+        int ret;
+        int end = RAND_MAX / n;
+        assert (end>0); // make sure, compiler does not optimize /n*n
+        end *= n;
+        while ((ret = rand()) >= end);
+        return ret % n;
+    }
+}
+
+/*
+ * Returns a random float in range (0, 1).
  */
 inline float random_float ()
 {
@@ -66,31 +94,45 @@ void generate_pair (char* seq1, int len1, char* seq2, int len2, int overlap)
 
     // fill seq1 completely with random chars
     generate_sequence (seq1, len1);
+    generate_sequence (seq2, len2);
 
-    char* p1; // where to start copying from seq1 to seq2
-    char* p2; // where to start storing the copied chars
+    char* p1; // where to start copying chars from seq1
+    char* p2; // where to start storing the copied chars in seq2
     int   lc; // how many chars to copy
-
-    char* pf; // where to start filling seq2 with randomness
-    int   lf; // how many chars to fill
 
     if (overlap < len1) { // normal case
         p1 = seq1 + len1 - overlap;
         p2 = seq2;
-        lc = overlap;
-        pf = seq2 + overlap;
-        lf = len2 - lc;
+        lc = min (overlap, len2);
     } else { // run through case
         p1 = seq1;
-        p2 = seq2 - len1 + overlap;
-        lc = len1 + len2 - overlap;
-        pf = seq2;
-        lf = len2 - lc;
+        p2 = seq2 + overlap - len1;
+        lc = len1 + min (0, len2 - overlap);
     }
 
-    // copy the overlap from seq1 to seq2, then fill the rest with random chars
+    // copy the overlap from seq1 to seq2
     strncpy (p2, p1, lc);
-    generate_sequence (pf, lf);
+}
+
+/*
+ *
+ */
+void generate_reads (int total_len,
+                     int reads_number,
+                     int reads_min_len,
+                     int reads_max_len,
+                     char*  total_seq,
+                     char** reads
+                    )
+{
+    // it needs to somehow be possible to cover the total seq with reads
+    assert (reads_number * reads_max_len > total_len);
+
+    generate_sequence (total_seq, total_len);
+
+    for (int i = 0; i < reads_number; i++) {
+
+    }
 }
 
 /*
@@ -100,7 +142,7 @@ void induce_errors (char* seq, int len, float prob)
 {
     char c;
     for (int i = 0; i < len; i++) {
-        if (random_float() < prob) {
+        if (random_float() <= prob) {
             // make sure it's actually a different char
             do {
                 c = random_char();
