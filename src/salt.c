@@ -296,8 +296,12 @@ void cmd_run_test ()
                          &overlaplen,
                          &matchcase);
 
-
-        printf ("CPU:  psmscore: %3ld, overlaplen: %3ld, matchcase: %3ld\n", psmscore, overlaplen, matchcase);
+        if (matchcase) {
+            overlap = seq_len[0] + seq_len[1] - overlaplen;
+        } else {
+            overlap = overlaplen;
+        }
+        printf ("CPU:  psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
 
         salt_overlap_plain8_sse((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                               (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
@@ -306,7 +310,12 @@ void cmd_run_test ()
                               &overlaplen,
                               &matchcase);
 
-        printf ("SSE8: psmscore: %3ld, overlaplen: %3ld, matchcase: %3ld\n", psmscore, overlaplen, matchcase);
+        if (matchcase) {
+            overlap = seq_len[0] + seq_len[1] - overlaplen;
+        } else {
+            overlap = overlaplen;
+        }
+        printf ("SSE8: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
 
         salt_overlap_plain16_sse((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                                (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
@@ -315,7 +324,12 @@ void cmd_run_test ()
                                &overlaplen,
                                &matchcase);
 
-        printf ("SSE3: psmscore: %3ld, overlaplen: %3ld, matchcase: %3ld\n", psmscore, overlaplen, matchcase);
+        if (matchcase) {
+            overlap = seq_len[0] + seq_len[1] - overlaplen;
+        } else {
+            overlap = overlaplen;
+        }
+        printf ("SSE3: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
 
         salt_overlap_plain16_avx2((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                                 (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
@@ -324,7 +338,12 @@ void cmd_run_test ()
                                 &overlaplen,
                                 &matchcase);
 
-        printf ("AVX2: psmscore: %3ld, overlaplen: %3ld, matchcase: %3ld\n", psmscore, overlaplen, matchcase);
+        if (matchcase) {
+            overlap = seq_len[0] + seq_len[1] - overlaplen;
+        } else {
+            overlap = overlaplen;
+        }
+        printf ("AVX2: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
         printf ("\n");
     }
 }
