@@ -198,6 +198,7 @@ SALT_EXPORT void pprint(__m128i x);
 
 /* functions in gen_test.c */
 
+int random_int_range (int min, int max);
 void generate_sequence (char* seq, int len);
 void generate_pair (char* seq1, int len1, char* seq2, int len2, int overlap);
 

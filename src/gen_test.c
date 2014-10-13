@@ -20,22 +20,20 @@ inline int min (int a, int b)
 }
 
 /*
- * Returns a random int within range [0, n).
+ * Returns a random int within range [min, max).
  *
  * It makes sure that numbers are equally distributed in the range.
  */
-int random_int (int n)
+int random_int_range (int min, int max)
 {
-    if ((n - 1) == RAND_MAX) {
-        return rand();
-    } else {
-        int ret;
-        int end = RAND_MAX / n;
-        assert (end>0); // make sure, compiler does not optimize /n*n
-        end *= n;
-        while ((ret = rand()) >= end);
-        return ret % n;
-    }
+    assert (min < max);
+    int ret;
+    int n = max-min;
+    int end = RAND_MAX / n;
+    assert (end>0); // make sure compiler does not optimize too much
+    end *= n;
+    while ((ret = rand()) >= end);
+    return min + (ret % n);
 }
 
 /*
@@ -73,7 +71,6 @@ char random_char ()
  */
 void generate_sequence (char* seq, int len)
 {
-    srand(time(NULL));
     for (int i = 0; i < len; i++) {
         seq[i] = random_char();
     }
