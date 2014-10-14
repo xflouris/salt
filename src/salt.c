@@ -27,7 +27,13 @@ static char * progname;
 char * opt_list_reads;
 char * opt_overlap_file;
 char * opt_algorithm;
+
 int    opt_run_test;
+int    opt_runs;
+int    opt_reads_min_len;
+int    opt_reads_max_len;
+int    opt_min_overlap;
+
 char * infilename;
 
 long opt_help;
@@ -43,22 +49,31 @@ void args_init(int argc, char **argv)
   /* Set defaults */
   progname = argv[0];
 
-  opt_help         = 0;
-  opt_version      = 0;
-  opt_list_reads   = 0;
-  opt_overlap_file = 0;
-  opt_algorithm    = strdup("CPU");
-  opt_run_test     = 0;
+  opt_help          = 0;
+  opt_version       = 0;
+  opt_list_reads    = 0;
+  opt_overlap_file  = 0;
+
+  opt_algorithm     = strdup("CPU");
+  opt_run_test      = 0;
+  opt_runs          = 10;
+  opt_reads_min_len = 150;
+  opt_reads_max_len = 300;
+  opt_min_overlap   = 20;
 
 
   static struct option long_options[] =
   {
-    {"help",       no_argument,       0, 0 },
-    {"version",    no_argument,       0, 0 },
-    {"list-reads", required_argument, 0, 0 },
-    {"overlap",    required_argument, 0, 0 },
-    {"algorithm",  required_argument, 0, 0 },
-    {"test",       no_argument,       0, 0 },
+    {"help",          no_argument,       0, 0 },
+    {"version",       no_argument,       0, 0 },
+    {"list-reads",    required_argument, 0, 0 },
+    {"overlap",       required_argument, 0, 0 },
+    {"algorithm",     required_argument, 0, 0 },
+    {"test",          no_argument,       0, 0 },
+    {"runs",          required_argument, 0, 0 },
+    {"reads_min_len", required_argument, 0, 0 },
+    {"reads_max_len", required_argument, 0, 0 },
+    {"min_overlap",   required_argument, 0, 0 },
     { 0, 0, 0, 0 }
   };
 
@@ -97,6 +112,26 @@ void args_init(int argc, char **argv)
        case 5:
          /* test */
          opt_run_test = 1;
+         break;
+
+       case 6:
+         /* number of runs */
+         opt_runs = atoi(optarg);
+         break;
+
+       case 7:
+         /* reads_min_len */
+         opt_reads_min_len = atoi(optarg);
+         break;
+
+       case 8:
+         /* reads_max_len */
+         opt_reads_max_len = atoi(optarg);
+         break;
+
+       case 9:
+         /* min_overlap */
+         opt_min_overlap = atoi(optarg);
          break;
 
        default:
@@ -259,23 +294,26 @@ void cmd_overlap()
 
 void cmd_run_test ()
 {
-    // to be made command line options
-    int runs = 1000000;
-    int reads_min_len = 150;
-    int reads_max_len = 300;
-    int min_overlap   = 100;
+    int runs          = opt_runs;
+    int reads_min_len = opt_reads_min_len;
+    int reads_max_len = opt_reads_max_len;
+    int min_overlap   = opt_min_overlap;
 
     assert (min_overlap < reads_min_len);
 
-    printf ("Running %i tests with\n", runs);
-    printf ("   reads_min_len: %i\n",  reads_min_len);
-    printf ("   reads_max_len: %i\n",  reads_max_len);
-    printf ("   min_overlap:   %i\n",  min_overlap);
+    printf ("Starting with\n");
+    printf ("   algorithm:     %s\n", opt_algorithm);
+    printf ("   runs:          %i\n", runs);
+    printf ("   reads_min_len: %i\n", reads_min_len);
+    printf ("   reads_max_len: %i\n", reads_max_len);
+    printf ("   min_overlap:   %i\n", min_overlap);
 
     char* seq[2];
     long  seq_len[2];
     int overlap;
     long psmscore = 0, overlaplen = 0, matchcase = 0;
+
+    reads_max_len++; // functions expect min<max, because the interval is [min,max)
 
     seq[0] = xmalloc (reads_max_len, SALT_ALIGNMENT_AVX);
     seq[1] = xmalloc (reads_max_len, SALT_ALIGNMENT_AVX);
