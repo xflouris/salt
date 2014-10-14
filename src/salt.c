@@ -332,8 +332,8 @@ void cmd_run_test ()
     long psmscore = 0, overlaplen = 0, matchcase = 0;
 
     reads_max_len++; // functions expect min<max, because the interval is [min,max)
-    seq[0] = xmalloc (reads_max_len, SALT_ALIGNMENT_AVX);
-    seq[1] = xmalloc (reads_max_len, SALT_ALIGNMENT_AVX);
+    seq[0] = (char*) xmalloc (reads_max_len * sizeof(char), SALT_ALIGNMENT_AVX);
+    seq[1] = (char*) xmalloc (reads_max_len * sizeof(char), SALT_ALIGNMENT_AVX);
 
     long scorematrix_long[SCORE_MATRIX_SIZE*SCORE_MATRIX_SIZE];
     WORD scorematrix_word[SCORE_MATRIX_SIZE*SCORE_MATRIX_SIZE];
@@ -341,30 +341,30 @@ void cmd_run_test ()
 
     init_scoring_matrices (&scorematrix_long, &scorematrix_word, &scorematrix_char);
 
+    // generate two random overlapping sequences
+    seq_len[0] = random_int_range (reads_min_len, reads_max_len);
+    seq_len[1] = random_int_range (reads_min_len, reads_max_len);
+    overlap    = random_int_range (min_overlap,   seq_len[0] + seq_len[1] - min_overlap);
+    generate_pair (seq[0], seq_len[0], seq[1], seq_len[1], overlap);
+    seq[0][seq_len[0]] = '\0';
+    seq[1][seq_len[1]] = '\0';
+
+    // user output the sequences
+    if (verbose) {
+        printf ("=============================================================\n");
+        printf ("dbs: %s len: %ld\n", seq[0], seq_len[0]);
+        printf ("qry: %s len: %ld\n", seq[1], seq_len[1]);
+        printf ("overlap: %u\n\n", overlap);
+    }
+
+    // convert sequences to a number representation
+    convert(seq[0]);
+    convert(seq[1]);
+
     clock_t stime = clock();
 
     // test-analyze many different random sequences
     for (int i = 0; i < runs; i++) {
-        // generate two random overlapping sequences
-        seq_len[0] = random_int_range (reads_min_len, reads_max_len);
-        seq_len[1] = random_int_range (reads_min_len, reads_max_len);
-        overlap    = random_int_range (min_overlap,   seq_len[0] + seq_len[1] - min_overlap);
-        generate_pair (seq[0], seq_len[0], seq[1], seq_len[1], overlap);
-        seq[0][seq_len[0]] = '\0';
-        seq[1][seq_len[1]] = '\0';
-
-        // user output the sequences
-        if (verbose) {
-            printf ("=============================================================\n");
-            printf ("dbs: %s len: %ld\n", seq[0], seq_len[0]);
-            printf ("qry: %s len: %ld\n", seq[1], seq_len[1]);
-            printf ("overlap: %u\n\n", overlap);
-        }
-
-        // convert sequences to a number representation
-        convert(seq[0]);
-        convert(seq[1]);
-
         // select algorithm to run
         if (strcmp(opt_algorithm, "CPU") == 0) {
             salt_overlap_plain(
@@ -406,17 +406,17 @@ void cmd_run_test ()
             printf ("Unknown algorithm: '%s'. Aborting.\n", opt_algorithm);
             exit(0);
         }
+    }
 
         // user output the results
-        if (verbose) {
-            if (matchcase) {
-                overlap = seq_len[0] + seq_len[1] - overlaplen;
-            } else {
-                overlap = overlaplen;
-            }
-            printf ("%s: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", opt_algorithm, psmscore, overlaplen, matchcase, overlap);
-        }
-    }
+        //if (verbose) {
+            //if (matchcase) {
+                //overlap = seq_len[0] + seq_len[1] - overlaplen;
+            //} else {
+                //overlap = overlaplen;
+            //}
+            //printf ("%s: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", opt_algorithm, psmscore, overlaplen, matchcase, overlap);
+        //}
 
     // user output timing information
     clock_t etime = clock();
