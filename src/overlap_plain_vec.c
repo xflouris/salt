@@ -55,58 +55,42 @@
 
 */
 
-static WORD * qprofile_fill16_avx(WORD * score_matrix_word,
+static WORD * qprofile   = NULL;
+static WORD * hh         = NULL;
+static WORD * ee         = NULL;
+
+static long qprofile_len = 0;
+static long ee_len       = 0;
+static long hh_len       = 0;
+
+static void qprofile_fill16_avx(WORD * score_matrix_word,
                                   BYTE * qseq,
                                   BYTE * qend)
 {
-  WORD * qprofile;
   WORD * offset;
   long qlen = qend - qseq;
   long padded_len = roundup(qlen, 16);
   long i;
 
-  qprofile = xmalloc(4*padded_len*sizeof(WORD), SALT_ALIGNMENT_AVX);
+  if (padded_len > qprofile_len)
+  {
+    free(qprofile);
+    qprofile = xmalloc(4*padded_len*sizeof(WORD), SALT_ALIGNMENT_SSE);
+    qprofile_len = padded_len;
+  }
 
   /* currently only for DNA with A,C,G,T as 0,1,2,3 */
   for (i = 0, offset = qprofile; i < 4; offset += padded_len, i++)
   {
     for (long j = 0; j < qlen; ++j)
     {
-      offset[j] = score_matrix_word[(i << 5) + qseq[j]]; 
+      offset[j] = score_matrix_word[(i << 5) + qseq[j]];
     }
     for (long j = qlen; j < padded_len; ++j)
-    {  
-      offset[j] = 0;
-    }
-  }
-  return qprofile;
-}
-
-static WORD * qprofile_fill16_sse(WORD * score_matrix_word,
-                                  BYTE * qseq,
-                                  BYTE * qend)
-{
-  WORD * qprofile;
-  WORD * offset;
-  long qlen = qend - qseq;
-  long padded_len = roundup(qlen, 8);
-  long i;
-
-  qprofile = xmalloc(4*padded_len*sizeof(WORD), SALT_ALIGNMENT_SSE);
-
-  /* currently only for DNA with A,C,G,T as 0,1,2,3 */
-  for (i = 0, offset = qprofile; i < 4; offset += padded_len, i++)
-  {
-    for (long j = 0; j < qlen; ++j)
     {
-      offset[j] = score_matrix_word[(i << 5) + qseq[j]]; 
-    }
-    for (long j = qlen; j < padded_len; ++j)
-    {  
       offset[j] = 0;
     }
   }
-  return qprofile;
 }
 
 //#ifdef DEBUG
@@ -154,26 +138,34 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
   long dlen = dend - dseq;
   long qlen = qend - qseq;
   long qlen_padded = roundup(qlen,16);
-  WORD * qprofile;
 
   char c;
 
-  WORD * hh = xmalloc(qlen_padded*sizeof(WORD), SALT_ALIGNMENT_AVX);
+  if (qlen_padded > hh_len)
+  {
+    free(hh);
+    hh = xmalloc(qlen_padded*sizeof(WORD), SALT_ALIGNMENT_AVX);
+    hh_len = qlen_padded;
+  }
+  if (dlen > ee_len)
+  {
+    free(ee);
+    ee = xmalloc(roundup(dlen,8)*sizeof(WORD), SALT_ALIGNMENT_AVX);
+    ee_len = dlen;
+  }
 
-  qprofile = qprofile_fill16_avx(score_matrix,
-                                 qseq,
-                                 qend);
+  qprofile_fill16_avx(score_matrix, qseq, qend);
 
   __m256i X, H, T1, xmm0, xmm1, xmm2, xmm3, xmm4;
 
-  xmm2 = _mm256_set_epi16(0xffff, 0xffff, 0xffff, 0xffff, 
+  xmm2 = _mm256_set_epi16(0xffff, 0xffff, 0xffff, 0xffff,
                           0xffff, 0xffff, 0xffff, 0xffff,
-                          0x0000, 0x0000, 0x0000, 0x0000, 
+                          0x0000, 0x0000, 0x0000, 0x0000,
                           0x0000, 0x0000, 0x0000, 0x0000);
 
-  xmm3 = _mm256_set_epi16(0x0000, 0x0000, 0x0000, 0x0000, 
+  xmm3 = _mm256_set_epi16(0x0000, 0x0000, 0x0000, 0x0000,
                           0x0000, 0x0000, 0x0000, 0x0000,
-                          0xffff, 0xffff, 0xffff, 0xffff, 
+                          0xffff, 0xffff, 0xffff, 0xffff,
                           0xffff, 0xffff, 0xffff, 0xffff);
 
   xmm0 = _mm256_setzero_si256();
@@ -182,6 +174,8 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
   {
     _mm256_store_si256((__m256i *)(hh + i), xmm0);
   }
+
+  WORD * lastbyte= hh+qlen-1;
 
   for (long j = 0; j < dlen; j++)
   {
@@ -193,7 +187,7 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
 
        xmm1 = _mm256_permute2x128_si256(H,H, _MM_SHUFFLE(0,0,0,3));
        xmm4 = _mm256_and_si256(xmm1, xmm3);
-       T1 = _mm256_alignr_epi8(xmm4,xmm0,0x1e); 
+       T1 = _mm256_alignr_epi8(xmm4,xmm0,0x1e);
 
        xmm4 = _mm256_and_si256(xmm1, xmm2);
        H    = _mm256_alignr_epi8(H,xmm4,14);
@@ -206,10 +200,15 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
 
        _mm256_store_si256((__m256i *)(hh+i),H);
      }
+
+     *(ee+j) = *lastbyte;
   }
 
+  // pick best value
   *matchcase = 0;
   score = hh[0];
+
+  // normal case
   for (long i = 0; i < qlen; ++i)
   {
     if (hh[i] >= score)
@@ -219,7 +218,17 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
     }
   }
 
+  // run through case
+  for (long i = 0; i < dlen; ++i)
+  {
+    if (ee[i] >= score)
+    {
+      len = i+1;
+      score = ee[i];
+      *matchcase = 1;
+    }
+  }
+
   *psmscore = score;
   *overlaplen = len;
-  
 }
