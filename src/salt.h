@@ -125,6 +125,8 @@ SALT_EXPORT void show_rusage();
 
 SALT_EXPORT void * xstrdup(char * s);
 
+SALT_EXPORT char* strdup(const char *str);
+
 /* functions in score.c */
 
 SALT_EXPORT void score_chrmap_set(unsigned char * map);

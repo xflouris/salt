@@ -21,10 +21,12 @@
 
 #include "salt.h"
 #include <assert.h>
+#include <time.h>
 
 static char * progname;
 char * opt_list_reads;
 char * opt_overlap_file;
+char * opt_algorithm;
 int    opt_run_test;
 char * infilename;
 
@@ -45,6 +47,7 @@ void args_init(int argc, char **argv)
   opt_version      = 0;
   opt_list_reads   = 0;
   opt_overlap_file = 0;
+  opt_algorithm    = strdup("CPU");
   opt_run_test     = 0;
 
 
@@ -54,6 +57,7 @@ void args_init(int argc, char **argv)
     {"version",    no_argument,       0, 0 },
     {"list-reads", required_argument, 0, 0 },
     {"overlap",    required_argument, 0, 0 },
+    {"algorithm",  required_argument, 0, 0 },
     {"test",       no_argument,       0, 0 },
     { 0, 0, 0, 0 }
   };
@@ -86,6 +90,11 @@ void args_init(int argc, char **argv)
          break;
 
        case 4:
+         /* select algorithm */
+         opt_algorithm = optarg;
+         break;
+
+       case 5:
          /* test */
          opt_run_test = 1;
          break;
@@ -103,6 +112,8 @@ void args_init(int argc, char **argv)
     commands++;
   if (opt_overlap_file)
     commands++;
+  //if (opt_algorithm)
+    //commands++;
   if (opt_run_test)
     commands++;
   if (opt_help)
@@ -249,12 +260,17 @@ void cmd_overlap()
 void cmd_run_test ()
 {
     // to be made command line options
-    int runs = 10;
+    int runs = 1000000;
     int reads_min_len = 150;
     int reads_max_len = 300;
     int min_overlap   = 100;
 
     assert (min_overlap < reads_min_len);
+
+    printf ("Running %i tests with\n", runs);
+    printf ("   reads_min_len: %i\n",  reads_min_len);
+    printf ("   reads_max_len: %i\n",  reads_max_len);
+    printf ("   min_overlap:   %i\n",  min_overlap);
 
     char* seq[2];
     long  seq_len[2];
@@ -270,6 +286,8 @@ void cmd_run_test ()
 
     init_scoring_matrices (&scorematrix_long, &scorematrix_word, &scorematrix_char);
 
+    clock_t stime = clock();
+
     for (int i = 0; i < runs; i++) {
         // generate random overlapping sequences
         seq_len[0] = random_int_range (reads_min_len, reads_max_len);
@@ -280,72 +298,66 @@ void cmd_run_test ()
         seq[0][seq_len[0]] = '\0';
         seq[1][seq_len[1]] = '\0';
 
-        printf ("=============================================================\n");
-        printf ("dbs: %s len: %ld\n", seq[0], seq_len[0]);
-        printf ("qry: %s len: %ld\n", seq[1], seq_len[1]);
-        printf ("overlap: %u\n\n", overlap);
+        //printf ("=============================================================\n");
+        //printf ("dbs: %s len: %ld\n", seq[0], seq_len[0]);
+        //printf ("qry: %s len: %ld\n", seq[1], seq_len[1]);
+        //printf ("overlap: %u\n\n", overlap);
 
         // convert to a number representation
         convert(seq[0]);
         convert(seq[1]);
 
-        salt_overlap_plain(seq[0], seq[0] + seq_len[0],
-                         seq[1], seq[1] + seq_len[1],
-                         (long *)scorematrix_long,
-                         &psmscore,
-                         &overlaplen,
-                         &matchcase);
-
-        if (matchcase) {
-            overlap = seq_len[0] + seq_len[1] - overlaplen;
+        if (strcmp(opt_algorithm, "CPU") == 0) {
+            salt_overlap_plain(
+                seq[0], seq[0] + seq_len[0],
+                seq[1], seq[1] + seq_len[1],
+                (long *)scorematrix_long,
+                &psmscore,
+                &overlaplen,
+                &matchcase
+            );
+        } else if (strcmp(opt_algorithm, "SSE8") == 0) {
+            salt_overlap_plain8_sse(
+                (BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
+                (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
+                scorematrix_char,
+                &psmscore,
+                &overlaplen,
+                &matchcase
+            );
+        } else if (strcmp(opt_algorithm, "SSE3") == 0) {
+            salt_overlap_plain16_sse(
+                (BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
+                (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
+                scorematrix_word,
+                &psmscore,
+                &overlaplen,
+                &matchcase
+            );
+        } else if (strcmp(opt_algorithm, "AVX") == 0) {
+            salt_overlap_plain16_avx2(
+                (BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
+                (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
+                scorematrix_word,
+                &psmscore,
+                &overlaplen,
+                &matchcase
+            );
         } else {
-            overlap = overlaplen;
+            printf ("Unknown algorithm: '%s'. Aborting.\n", opt_algorithm);
+            exit(0);
         }
-        printf ("CPU:  psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
 
-        salt_overlap_plain8_sse((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
-                              (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
-                              scorematrix_char,
-                              &psmscore,
-                              &overlaplen,
-                              &matchcase);
-
-        if (matchcase) {
-            overlap = seq_len[0] + seq_len[1] - overlaplen;
-        } else {
-            overlap = overlaplen;
-        }
-        printf ("SSE8: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
-
-        salt_overlap_plain16_sse((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
-                               (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
-                               scorematrix_word,
-                               &psmscore,
-                               &overlaplen,
-                               &matchcase);
-
-        if (matchcase) {
-            overlap = seq_len[0] + seq_len[1] - overlaplen;
-        } else {
-            overlap = overlaplen;
-        }
-        printf ("SSE3: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
-
-        salt_overlap_plain16_avx2((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
-                                (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
-                                scorematrix_word,
-                                &psmscore,
-                                &overlaplen,
-                                &matchcase);
-
-        if (matchcase) {
-            overlap = seq_len[0] + seq_len[1] - overlaplen;
-        } else {
-            overlap = overlaplen;
-        }
-        printf ("AVX2: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
-        printf ("\n");
+        //if (matchcase) {
+            //overlap = seq_len[0] + seq_len[1] - overlaplen;
+        //} else {
+            //overlap = overlaplen;
+        //}
+        //printf ("CPU:  psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", psmscore, overlaplen, matchcase, overlap);
     }
+
+    clock_t etime = clock();
+    printf ("\nFinished.\nClock time: %li\n", etime-stime);
 }
 
 void getentirecommandline(int argc, char ** argv)
