@@ -1,6 +1,11 @@
 #!/bin/bash
 
-runs=1000000
+runs=1000
+if [ $1 ]
+then
+    runs=$1
+fi
+
 lengths=( 150 250 300 )
 algos=( "CPU" "SSE8" "SSE3" "AVX" )
 rm -f output
@@ -16,9 +21,8 @@ do
         ../src/salt --test --algorithm ${algo} --runs ${runs} --reads_min_len ${len} --reads_max_len ${len} --min_overlap 1 > output
 
         c=`grep "Clock time" output | cut -d":" -f2 | tr -d ' '`
-        t=$((c/1000000))
-        m=$((c%1000000))
-        echo -e "${algo}\t${len}\t${c}\t${t}.${m}"
+        t=$(awk "BEGIN {printf \"%.6f\",${c}/1000000}")
+        echo -e "${algo}\t${len}\t${c}\t${t}"
     done
     echo ""
 done
