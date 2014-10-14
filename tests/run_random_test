@@ -1,0 +1,24 @@
+#!/bin/bash
+
+runs=1000
+if [ $1 ]
+then
+    runs=$1
+fi
+
+algos=( "CPU" "SSE8" "SSE3" "AVX" )
+seed=$RANDOM
+
+echo "Starting ${runs} runs with ${algos[@]}. Seed ${seed}."
+echo -e "\nAlgo\tLen\tClock\tTime (s)"
+echo -e "----\t---\t-------\t--------"
+
+for algo in "${algos[@]}"
+do
+    ../src/salt --test --algorithm ${algo} --runs ${runs} --reads_min_len 150 --reads_max_len 300 --min_overlap 1 --seed ${seed} > output
+
+    c=`grep "Clock time" output | cut -d":" -f2 | tr -d ' '`
+    t=$(awk "BEGIN {printf \"%.6f\",${c}/1000000}")
+    echo -e "${algo}\t${len}\t${c}\t${t}"
+done
+rm -f output

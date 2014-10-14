@@ -33,6 +33,8 @@ int    opt_runs;
 int    opt_reads_min_len;
 int    opt_reads_max_len;
 int    opt_min_overlap;
+int    opt_verbose;
+int    opt_seed;
 
 char * infilename;
 
@@ -60,7 +62,8 @@ void args_init(int argc, char **argv)
   opt_reads_min_len = 150;
   opt_reads_max_len = 300;
   opt_min_overlap   = 20;
-
+  opt_verbose       = 0;
+  opt_seed          = time(NULL);
 
   static struct option long_options[] =
   {
@@ -74,6 +77,8 @@ void args_init(int argc, char **argv)
     {"reads_min_len", required_argument, 0, 0 },
     {"reads_max_len", required_argument, 0, 0 },
     {"min_overlap",   required_argument, 0, 0 },
+    {"verbose",       no_argument,       0, 0 },
+    {"seed",          required_argument, 0, 0 },
     { 0, 0, 0, 0 }
   };
 
@@ -135,6 +140,16 @@ void args_init(int argc, char **argv)
          opt_min_overlap = atoi(optarg);
          break;
 
+       case 10:
+         /* verbose */
+         opt_verbose = 1;
+         break;
+
+       case 11:
+         /* seeed - dancehall caballeros*/
+         opt_seed = atoi(optarg);
+         break;
+
        default:
          fatal("Internal error in option parsing");
      }
@@ -148,8 +163,6 @@ void args_init(int argc, char **argv)
     commands++;
   if (opt_overlap_file)
     commands++;
-  //if (opt_algorithm)
-    //commands++;
   if (opt_run_test)
     commands++;
   if (opt_help)
@@ -300,8 +313,7 @@ void cmd_run_test ()
     int reads_min_len = opt_reads_min_len;
     int reads_max_len = opt_reads_max_len;
     int min_overlap   = opt_min_overlap;
-
-    int verbose       = 1;
+    int verbose       = opt_verbose;
 
     assert (min_overlap < reads_min_len);
 
@@ -461,7 +473,7 @@ int main (int argc, char * argv[])
   getentirecommandline(argc, argv);
 
   args_init(argc, argv);
-  srand(time(NULL));
+  srand(opt_seed);
 
   show_header();
 

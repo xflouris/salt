@@ -7,11 +7,10 @@ then
 fi
 
 lengths=( 150 250 300 )
-algos=( "AVX" )
-#algos=( "CPU" "SSE8" "SSE3" "AVX" )
-rm -f output
+algos=( "CPU" "SSE8" "SSE3" "AVX" )
+seed=$RANDOM
 
-echo "Starting ${runs} runs with ${algos[@]}."
+echo "Starting ${runs} runs with ${algos[@]}. Seed ${seed}."
 echo -e "\nAlgo\tLen\tClock\tTime (s)"
 echo -e "----\t---\t-------\t--------"
 
@@ -19,7 +18,7 @@ for algo in "${algos[@]}"
 do
     for len in "${lengths[@]}"
     do
-        ../src/salt --test --algorithm ${algo} --runs ${runs} --reads_min_len ${len} --reads_max_len ${len} --min_overlap 1 > output
+        ../src/salt --test --algorithm ${algo} --runs ${runs} --reads_min_len ${len} --reads_max_len ${len} --min_overlap 1 --seed ${seed} > output
 
         c=`grep "Clock time" output | cut -d":" -f2 | tr -d ' '`
         t=$(awk "BEGIN {printf \"%.6f\",${c}/1000000}")
@@ -27,3 +26,4 @@ do
     done
     echo ""
 done
+rm -f output
