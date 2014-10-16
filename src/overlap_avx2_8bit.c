@@ -62,19 +62,20 @@ static long ee_len       = 0;
 static long hh_len       = 0;
 
 //#ifdef DEBUG
-void pprint_avx8(__m256i x)
+void pprint_avx8 (__m256i x)
 {
     char * p = (char *) & x;
     for (int i = 0; i < 32; i++) {
-        printf("%+d ", *p++);
+        printf ("%3d ", *p++);
+        if((i+1)%8 == 0) printf ("  ");
     }
 }
 
-void pshow_avx8(char * name, __m256i x)
+void pshow_avx8 (char * name, __m256i x)
 {
-  printf("%s: ", name);
+  printf ("%s: ", name);
   pprint_avx8(x);
-  printf("\n");
+  printf ("\n");
 }
 
 //#endif
@@ -90,7 +91,7 @@ static void qprofile_fill8_avx (char * score_matrix,
     // make sure qprofile is big enough
     if (padded_len > qprofile_len) {
         free (qprofile);
-        qprofile     = xmalloc(4*padded_len*sizeof(char), SALT_ALIGNMENT_AVX);
+        qprofile     = xmalloc (4*padded_len*sizeof(char), SALT_ALIGNMENT_AVX);
         qprofile_len = padded_len;
     }
 
@@ -99,10 +100,10 @@ static void qprofile_fill8_avx (char * score_matrix,
 
     // load scoring values for each letter
     // (only [31:0] are interesting, rest is garbage)
-    xmm1 = _mm256_load_si256((__m256i *)(score_matrix+0));  // A
-    xmm2 = _mm256_load_si256((__m256i *)(score_matrix+32)); // C
-    xmm3 = _mm256_load_si256((__m256i *)(score_matrix+64)); // G
-    xmm4 = _mm256_load_si256((__m256i *)(score_matrix+96)); // T
+    xmm1 = _mm256_load_si256 ((__m256i *)(score_matrix+0));  // A
+    xmm2 = _mm256_load_si256 ((__m256i *)(score_matrix+32)); // C
+    xmm3 = _mm256_load_si256 ((__m256i *)(score_matrix+64)); // G
+    xmm4 = _mm256_load_si256 ((__m256i *)(score_matrix+96)); // T
 
     // copy [127:0] to [255:128]
     xmm1 = _mm256_permute4x64_epi64 (xmm1, 0x44);
@@ -142,66 +143,84 @@ void salt_overlap_avx2_8bit (BYTE * dseq,
                              long * overlaplen,
                              long * matchcase)
 {
+    // get the sizes needed for storage
     long dlen = dend - dseq;
     long qlen = qend - qseq;
-    long qlen_padded = roundup(qlen,16);
+    long qlen_padded = roundup(qlen,SALT_ALIGNMENT_AVX);
 
-
-
+    // make sure the matrix is big enough for current sequences
     if (qlen_padded > hh_len) {
         free(hh);
-        hh = xmalloc(qlen_padded*sizeof(WORD), SALT_ALIGNMENT_AVX);
+        hh = xmalloc (qlen_padded*sizeof(char), SALT_ALIGNMENT_AVX);
         hh_len = qlen_padded;
     }
     if (dlen > ee_len) {
         free(ee);
-        ee = xmalloc(roundup(dlen,8)*sizeof(WORD), SALT_ALIGNMENT_AVX);
+        ee = xmalloc (roundup(dlen,8)*sizeof(char), SALT_ALIGNMENT_AVX);
         ee_len = dlen;
     }
 
+    // fill the profile vectors
     qprofile_fill8_avx(score_matrix, qseq, qend);
 
+    // declare needed register vars
     __m256i X, H, T1, xmm0, xmm1, xmm2, xmm3, xmm4;
 
-    xmm2 = _mm256_set_epi16(0xffff, 0xffff, 0xffff, 0xffff,
-                          0xffff, 0xffff, 0xffff, 0xffff,
-                          0x0000, 0x0000, 0x0000, 0x0000,
-                          0x0000, 0x0000, 0x0000, 0x0000);
-
-    xmm3 = _mm256_set_epi16(0x0000, 0x0000, 0x0000, 0x0000,
-                          0x0000, 0x0000, 0x0000, 0x0000,
-                          0xffff, 0xffff, 0xffff, 0xffff,
-                          0xffff, 0xffff, 0xffff, 0xffff);
-
+    // set fixed mask registers
     xmm0 = _mm256_setzero_si256();
 
-    for (long i = 0; i < qlen_padded; i += 16) {
-        _mm256_store_si256((__m256i *)(hh + i), xmm0);
+    xmm1 = _mm256_set_epi16(0xffff, 0xffff, 0xffff, 0xffff,
+                            0xffff, 0xffff, 0xffff, 0xffff,
+                            0x0000, 0x0000, 0x0000, 0x0000,
+                            0x0000, 0x0000, 0x0000, 0x0000);
+
+    xmm2 = _mm256_set_epi16(0x0000, 0x0000, 0x0000, 0x0000,
+                            0x0000, 0x0000, 0x0000, 0x0000,
+                            0xffff, 0xffff, 0xffff, 0xffff,
+                            0xffff, 0xffff, 0xffff, 0xffff);
+
+    // fill column with zeros
+    for (long i = 0; i < qlen_padded; i += 32) {
+        _mm256_store_si256 ((__m256i *)(hh + i), xmm0);
     }
 
-    char c;
-    WORD * lastbyte= hh+qlen-1;
+    char c; // current character in dseq
+    char * lastbyte= hh+qlen-1;
 
     for (long j = 0; j < dlen; j++) {
         X = xmm0;
         c = dseq[j];
-        for (long i = 0; i < qlen_padded; i += 16) {
-            H  = _mm256_load_si256((__m256i *)(hh+i));
 
-            xmm1 = _mm256_permute2x128_si256(H,H, _MM_SHUFFLE(0,0,0,3));
-            xmm4 = _mm256_and_si256(xmm1, xmm3);
-            T1 = _mm256_alignr_epi8(xmm4,xmm0,0x1e);
+        for (long i = 0; i < qlen_padded; i += 32) {
+            // load values of previous column from hh
+            H  = _mm256_load_si256 ((__m256i *)(hh+i));
 
-            xmm4 = _mm256_and_si256(xmm1, xmm2);
-            H    = _mm256_alignr_epi8(H,xmm4,14);
+            // switch the two 128bit lanes
+            xmm3 = _mm256_permute2x128_si256 (H,H, 1);
 
-            H  = _mm256_or_si256(H,X);
-            X  = T1;
+            // save the last element of the vector at
+            // first position of T1 for next iteration
+            xmm4 = _mm256_and_si256 (xmm3, xmm2);
+            T1   = _mm256_alignr_epi8 (xmm4, xmm0, 31);
 
-            xmm1 = _mm256_load_si256((__m256i *)(qprofile + c*qlen_padded + i));
-            H = _mm256_add_epi16(H,xmm1);
+            // shift H by 1 and shift the 'lost' middle element in
+            xmm3 = _mm256_and_si256 (xmm3, xmm1);
+            H    = _mm256_alignr_epi8 (H, xmm3, 15);
 
-            _mm256_store_si256((__m256i *)(hh+i),H);
+            // add last element of previous columns vector
+            H    = _mm256_or_si256 (H,X);
+
+            // store current last element for next iteration
+            X    = T1;
+
+            // load scoring values for the current char c from the profile
+            xmm3 = _mm256_load_si256 ((__m256i *)(qprofile + c*qlen_padded + i));
+
+            // add them to the column
+            H = _mm256_adds_epi8 (H,xmm3);
+
+            // store result in hh
+            _mm256_store_si256 ((__m256i *)(hh+i),H);
         }
 
         *(ee+j) = *lastbyte;
@@ -209,7 +228,7 @@ void salt_overlap_avx2_8bit (BYTE * dseq,
 
     // prepare to pick best value
     *matchcase = 0;
-    WORD score = hh[0];
+    char score = hh[0];
     long len   = 0;
 
     // find best value in normal case...

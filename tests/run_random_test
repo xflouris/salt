@@ -1,12 +1,12 @@
 #!/bin/bash
 
-runs=1000
+runs=100000
 if [ $1 ]
 then
     runs=$1
 fi
 
-algos=( "CPU" "SSE8" "SSE3" "AVX" )
+algos=( "CPU" "SSE8" "SSE16" "AVX8" "AVX16" )
 seed=$RANDOM
 
 echo "Starting ${runs} runs with ${algos[@]}. Seed ${seed}."

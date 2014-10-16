@@ -430,13 +430,18 @@ void cmd_run_test ()
     }
 
     // user output the results
+    int noverlap;
+    if (matchcase) {
+        noverlap = seq_len[0] + seq_len[1] - overlaplen;
+    } else {
+        noverlap = overlaplen;
+    }
     if (verbose) {
-        if (matchcase) {
-            overlap = seq_len[0] + seq_len[1] - overlaplen;
-        } else {
-            overlap = overlaplen;
-        }
-        printf ("%s: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", opt_algorithm, psmscore, overlaplen, matchcase, overlap);
+        printf ("%s: psmscore: %3ld, overlaplen: %3ld, matchcase: %ld, actual overlap: %3d\n", opt_algorithm, psmscore, overlaplen, matchcase, noverlap);
+    }
+
+    if (overlap!=noverlap) {
+        printf ("Warning: wrong overlaps %i vs %i! Seed: %i", overlap, noverlap, opt_seed);
     }
 
     // user output timing information

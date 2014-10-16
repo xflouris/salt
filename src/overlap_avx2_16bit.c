@@ -70,6 +70,7 @@ void pprint_avx16(__m256i x)
     short * p = (short *) & x;
     for (int i = 0; i < 16; i++) {
         printf("%04d ", *p++);
+        if ((i+1)%4==0) printf("  ");
     }
 }
 
@@ -211,9 +212,13 @@ void salt_overlap_avx2_16bit  (BYTE * dseq,
     c = dseq[j];
     for (long i = 0; i < qlen_padded; i += 16)
      {
+       // load previous column
        H  = _mm256_load_si256((__m256i *)(hh+i));
 
+       // switch lanes
        xmm1 = _mm256_permute2x128_si256(H,H, _MM_SHUFFLE(0,0,0,3));
+
+       // store the last element of H into first position of T1
        xmm4 = _mm256_and_si256(xmm1, xmm3);
        T1 = _mm256_alignr_epi8(xmm4,xmm0,0x1e);
 
