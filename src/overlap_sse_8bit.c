@@ -84,10 +84,10 @@ static void qprofile_fill8_sse(char * score_matrix_byte,
   {
     for (long j = 0; j < qlen; ++j)
     {
-      offset[j] = score_matrix_byte[(i << 5) + qseq[j]]; 
+      offset[j] = score_matrix_byte[(i << 5) + qseq[j]];
     }
     for (long j = qlen; j < padded_len; ++j)
-    {  
+    {
       offset[j] = 0;
     }
   }
@@ -112,7 +112,7 @@ static void qprofile_fill8_sse(char * score_matrix_byte,
     qprofile = xmalloc(4*padded_len*sizeof(char), SALT_ALIGNMENT_SSE);
     qprofile_len = padded_len;
   }
-  
+
   /* mask */
   xmm0 = _mm_set_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                       0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01);
@@ -198,7 +198,7 @@ void pshow_sse8(char * name, __m128i x)
       xmm2  = _mm_load_si128((__m128i *)(qprofile+c*qlen_padded+i)); \
       H     = _mm_add_epi8(xmm1,xmm2);                               \
       _mm_store_si128((__m128i *)(hh+i),H);                          \
-    } 
+    }
 
 #define PROCESS16_NA                                                 \
   for (long j=0; j<dlen16; j+=16)                                    \
@@ -325,7 +325,7 @@ static void donormal8(BYTE * dseq, BYTE * qseq,
   long qlen_padded = roundup(qlen,16);
   long dlen16 = (dlen >> 4) << 4;
   char c;
-  
+
   __m128i xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,   xmm7;
   __m128i xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15;
 
@@ -394,11 +394,11 @@ static void donormal8(BYTE * dseq, BYTE * qseq,
     ONESTEP(xmm4,j);
     *(ee+j) = *(hh+qlen-1);
   }
-  
+
 }
 
 
-void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
+void salt_overlap_sse_8bit (BYTE * dseq, BYTE * dend,
                               BYTE * qseq, BYTE * qend,
                               char * score_matrix,
                               long * psmscore,
@@ -411,7 +411,7 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
   long qlen = qend - qseq;
   long qlen_padded = roundup(qlen,16);
   char c;
-  
+
   __m128i xmm0, X, H, T1, xmm1;
 
   xmm0 = _mm_setzero_si128();
@@ -447,7 +447,7 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
     for (long i = 0; i < qlen_padded; i += 16)
      {
        H  = _mm_load_si128((__m128i *)(hh+i));
-       
+
        T1 = _mm_srli_si128(H,15);
        H  = _mm_slli_si128(H,1);
        H  = _mm_or_si128(H,X);
@@ -460,9 +460,9 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
      }
     *(ee+j) = *lastbyte;
   }
-  
 
-  /* pick the best values 
+
+  /* pick the best values
      TODO: vectorize it */
   *matchcase = 0;
   score = hh[0];
@@ -485,12 +485,12 @@ void salt_overlap_plain8_sse (BYTE * dseq, BYTE * dend,
       *matchcase = 1;
     }
   }
-  
+
   *psmscore = score;
   *overlaplen = len;
 }
-                      
-void salt_overlap_plain8_sse2(BYTE * dseq, BYTE * dend,
+
+void salt_overlap_sse2_8bit (BYTE * dseq, BYTE * dend,
                               BYTE * qseq, BYTE * qend,
                               char * score_matrix,
                               long * psmscore,
@@ -523,9 +523,9 @@ void salt_overlap_plain8_sse2(BYTE * dseq, BYTE * dend,
 
   donormal8(dseq, qseq,
             dlen, qlen);
-  
 
-  /* pick the best values 
+
+  /* pick the best values
      TODO: vectorize it */
   *matchcase = 0;
   score = hh[0];
@@ -548,7 +548,7 @@ void salt_overlap_plain8_sse2(BYTE * dseq, BYTE * dend,
       *matchcase = 1;
     }
   }
-  
+
   *psmscore = score;
   *overlaplen = len;
 }

@@ -60,6 +60,7 @@
 
 #define SALT_ALIGNMENT_SSE 16
 #define SALT_ALIGNMENT_AVX 32
+#define SALT_ALIGNMENT_MAX 32 // used whenever it is yet unclear which alignment is needed
 
 #ifdef __APPLE__
 #define PROG_ARCH "macosx_x86_64"
@@ -123,7 +124,7 @@ SALT_EXPORT long getusec(void);
 
 SALT_EXPORT void show_rusage();
 
-SALT_EXPORT void * xstrdup(char * s);
+SALT_EXPORT void * xstrdup(char * s, size_t alignment);
 
 SALT_EXPORT char* strdup(const char *str);
 
@@ -148,16 +149,20 @@ SALT_EXPORT void salt_overlap_plain(char * dseq, char * dend,
                                     long * overlaplen,
                                     long * matchcase);
 
-/* functions in overlap_plain_vec.c */
+/* functions in overlap_avx2_8bit.c */
 
-SALT_EXPORT void salt_overlap_plain16_avx(BYTE * dseq, BYTE * dend,
-                                          BYTE * qseq, BYTE * qend,
-                                          WORD * score_matrix,
-                                          long * psmscore,
-                                          long * overlaplen,
-                                          long * matchcase);
+SALT_EXPORT void salt_overlap_avx2_8bit(BYTE * dseq,
+                                       BYTE * dend,
+                                       BYTE * qseq,
+                                       BYTE * qend,
+                                       char * score_matrix,
+                                       long * psmscore,
+                                       long * overlaplen,
+                                       long * matchcase);
 
-SALT_EXPORT void salt_overlap_plain16_avx2(BYTE * dseq,
+/* functions in overlap_avx2_16bit.c */
+
+SALT_EXPORT void salt_overlap_avx2_16bit (BYTE * dseq,
                                            BYTE * dend,
                                            BYTE * qseq,
                                            BYTE * qend,
@@ -166,34 +171,35 @@ SALT_EXPORT void salt_overlap_plain16_avx2(BYTE * dseq,
                                            long * overlaplen,
                                            long * matchcase);
 
-/* functions in overlap_plain_sse16.c */
+/* functions in overlap_sse_8bit.c */
 
-SALT_EXPORT void salt_overlap_plain16_sse(BYTE * dseq, BYTE * dend,
+SALT_EXPORT void salt_overlap_sse_8bit (BYTE * dseq,
+                                          BYTE * dend,
+                                          BYTE * qseq,
+                                          BYTE * qend,
+                                          char * score_matrix,
+                                          long * psmscore,
+                                          long * overlaplen,
+                                          long * matchcase);
+
+SALT_EXPORT void salt_overlap_sse2_8bit (BYTE * dseq,
+                                          BYTE * dend,
+                                          BYTE * qseq,
+                                          BYTE * qend,
+                                          char * score_matrix,
+                                          long * psmscore,
+                                          long * overlaplen,
+                                          long * matchcase);
+
+/* functions in overlap_sse_16bit.c */
+
+SALT_EXPORT void salt_overlap_sse_16bit (BYTE * dseq, BYTE * dend,
                                           BYTE * qseq, BYTE * qend,
                                           WORD * score_matrix,
                                           long * pmscore,
                                           long * overlaplen,
                                           long * matchcase);
 
-/* functions in overlap_plain_sse8.c */
-
-SALT_EXPORT void salt_overlap_plain8_sse (BYTE * dseq,
-                                          BYTE * dend,
-                                          BYTE * qseq,
-                                          BYTE * qend,
-                                          char * score_matrix,
-                                          long * psmscore,
-                                          long * overlaplen,
-                                          long * matchcase);
-
-SALT_EXPORT void salt_overlap_plain8_sse2(BYTE * dseq,
-                                          BYTE * dend,
-                                          BYTE * qseq,
-                                          BYTE * qend,
-                                          char * score_matrix,
-                                          long * psmscore,
-                                          long * overlaplen,
-                                          long * matchcase);
 /* functions in popcount.c */
 
 SALT_EXPORT void pprint(__m128i x);

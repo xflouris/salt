@@ -105,10 +105,10 @@ static void qprofile_fill16_sse(WORD * score_matrix_word,
   {
     for (long j = 0; j < qlen; ++j)
     {
-      offset[j] = score_matrix_word[(i << 5) + qseq[j]]; 
+      offset[j] = score_matrix_word[(i << 5) + qseq[j]];
     }
     for (long j = qlen; j < padded_len; ++j)
-    {  
+    {
       offset[j] = 0;
     }
   }
@@ -145,7 +145,7 @@ static void qprofile_fill16_sse(WORD * score_matrix_word,
 
   xmm3 = _mm_unpacklo_epi64(xmm1,xmm2);  /* contains AC for A,C,G,T */
   xmm4 = _mm_unpackhi_epi64(xmm1,xmm2);  /* contains GT for A,C,G,T */
-  
+
   xmm5 = _mm_set_epi8(0x80, 0x07, 0x80, 0x06, 0x80, 0x05, 0x80, 0x04,
                       0x80, 0x03, 0x80, 0x02, 0x80, 0x01, 0x80, 0x00);
 
@@ -176,13 +176,13 @@ static void qprofile_fill16_sse(WORD * score_matrix_word,
     xmm11 = _mm_slli_si128(xmm10, 1);
     xmm10 = _mm_or_si128(xmm10,xmm11);
     xmm10 = _mm_add_epi8(xmm10,xmm7);
-    
+
     /* get A component */
     xmm11 = _mm_shuffle_epi8(xmm3,xmm9); /* store it */
 
     /* get G component */
     xmm12 = _mm_shuffle_epi8(xmm4,xmm9); /* store it */
-    
+
     xmm9 = _mm_add_epi8(xmm9,xmm0);
 
     /* get C component */
@@ -201,7 +201,7 @@ static void qprofile_fill16_sse(WORD * score_matrix_word,
 
     /* get G component */
     xmm12 = _mm_shuffle_epi8(xmm4,xmm10); /* store it */
-    
+
     xmm10 = _mm_add_epi8(xmm10,xmm0);
 
     /* get C component */
@@ -218,7 +218,7 @@ static void qprofile_fill16_sse(WORD * score_matrix_word,
 }
 #endif
 
-void salt_overlap_plain16_sse (BYTE * dseq,
+void salt_overlap_sse_16bit (BYTE * dseq,
                                BYTE * dend,
                                BYTE * qseq,
                                BYTE * qend,
@@ -271,7 +271,7 @@ void salt_overlap_plain16_sse (BYTE * dseq,
     for (long i = 0; i < qlen_padded; i += 8)
      {
        H  = _mm_load_si128((__m128i *)(hh+i));
-       
+
        T1 = _mm_srli_si128(H,14);
        H  = _mm_slli_si128(H,2);
        H  = _mm_or_si128(H,X);
@@ -292,7 +292,7 @@ void salt_overlap_plain16_sse (BYTE * dseq,
     *(ee+j) = *lastbyte;
   }
 
-  /* pick the best values 
+  /* pick the best values
      TODO: vectorize it */
   *matchcase = 0;
   score = hh[0];
@@ -315,7 +315,7 @@ void salt_overlap_plain16_sse (BYTE * dseq,
       *matchcase = 1;
     }
   }
-  
+
   *psmscore = score;
   *overlaplen = len;
 }

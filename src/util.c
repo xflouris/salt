@@ -83,15 +83,15 @@ char * xstrchrnul(char *s, int c)
 }
 
 /* TODO: separate it into xstrdup and xstrdup_aligned */
-void * xstrdup(char * s)
+void * xstrdup(char * s, size_t alignment)
 {
   int len = strlen(s);
   //char * x = xmalloc(len+1, 8);
-  char * x = xmalloc(roundup(len,16)+1, 16);
+  char * x = xmalloc(roundup(len,alignment)+1, alignment);
   strcpy(x,s);
 
   /* zero out remaining bytes */
-  for (long i = len; i < roundup(len,16); ++i)
+  for (long i = len; i < roundup(len,alignment); ++i)
     x[i] = 0;
 
   return x;

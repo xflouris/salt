@@ -63,19 +63,37 @@ static long qprofile_len = 0;
 static long ee_len       = 0;
 static long hh_len       = 0;
 
-static void qprofile_fill16_avx(WORD * score_matrix_word,
-                                  BYTE * qseq,
-                                  BYTE * qend)
+//#ifdef DEBUG
+
+void pprint_avx16(__m256i x)
+{
+    short * p = (short *) & x;
+    for (int i = 0; i < 16; i++) {
+        printf("%04d ", *p++);
+    }
+}
+
+void pshow_avx16(char * name, __m256i x)
+{
+  printf("%s: ", name);
+  pprint_avx16(x);
+  printf("\n");
+}
+//#endif
+
+static void qprofile_fill16_avx (WORD * score_matrix_word,
+                                 BYTE * qseq,
+                                 BYTE * qend)
 {
   WORD * offset;
   long qlen = qend - qseq;
-  long padded_len = roundup(qlen, 16);
+  long padded_len = roundup(qlen, SALT_ALIGNMENT_AVX);
   long i;
 
   if (padded_len > qprofile_len)
   {
     free(qprofile);
-    qprofile = xmalloc(4*padded_len*sizeof(WORD), SALT_ALIGNMENT_SSE);
+    qprofile = xmalloc(4*padded_len*sizeof(WORD), SALT_ALIGNMENT_AVX);
     qprofile_len = padded_len;
   }
 
@@ -93,38 +111,48 @@ static void qprofile_fill16_avx(WORD * score_matrix_word,
   }
 }
 
-//#ifdef DEBUG
-void pprint_avx(__m256i x)
+static void qprofile_fill16_avx_vec (WORD * score_matrix,
+                                 BYTE * qseq,
+                                 BYTE * qend)
 {
-  short * p = (short *) & x;
+    // get the sizes needed for storage
+    long qlen       = qend - qseq;
+    long padded_len = roundup(qlen, SALT_ALIGNMENT_AVX);
 
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d ", *p++);
-  printf("%04d", *p++);
+    // make sure qprofile is big enough
+    if (padded_len > qprofile_len) {
+        free (qprofile);
+        qprofile     = xmalloc(4*padded_len*sizeof(char), SALT_ALIGNMENT_AVX);
+        qprofile_len = padded_len;
+    }
+
+    // declare all needed register vars
+    __m256i xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5;
+
+    // load scoring values for each letter
+    // (only [31:0] are interesting, rest is garbage)
+    xmm1 = _mm256_load_si256((__m256i *)(score_matrix+0));  // A
+    xmm2 = _mm256_load_si256((__m256i *)(score_matrix+32)); // C
+    xmm3 = _mm256_load_si256((__m256i *)(score_matrix+64)); // G
+    xmm4 = _mm256_load_si256((__m256i *)(score_matrix+96)); // T
+
+    //combine A+C into xmm1[127:0] and G+T into xmm2[127:0]
+    xmm1 = _mm256_unpacklo_epi64(xmm1,xmm2);
+    xmm2 = _mm256_unpacklo_epi64(xmm3,xmm4);
+
+     //combine everything so that xmm0 holds all 16 scoring values
+    xmm0 = _mm256_permute2f128_si256(xmm1, xmm2, 0x20);
+
+    // loop over qseq to process it, jumping a vector size per iteration
+    for (long i = 0; i < padded_len; i += 32) {
+        // load data of one vector size from qseq
+        xmm0 = _mm256_load_si256 ((__m256i*) (qseq+i));
+
+        // TODO
+    }
 }
 
-void pshow_avx(char * name, __m256i x)
-{
-  printf("%s: ", name);
-  pprint_avx(x);
-  printf("\n");
-}
-//#endif
-
-void salt_overlap_plain16_avx2(BYTE * dseq,
+void salt_overlap_avx2_16bit  (BYTE * dseq,
                                BYTE * dend,
                                BYTE * qseq,
                                BYTE * qend,
@@ -204,11 +232,11 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
      *(ee+j) = *lastbyte;
   }
 
-  // pick best value
+  // prepare to pick best value
   *matchcase = 0;
-  score = hh[0];
+  score      = hh[0];
 
-  // normal case
+  // find best value in normal case...
   for (long i = 0; i < qlen; ++i)
   {
     if (hh[i] >= score)
@@ -218,7 +246,7 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
     }
   }
 
-  // run through case
+  // ... and run through case
   for (long i = 0; i < dlen; ++i)
   {
     if (ee[i] >= score)
@@ -229,6 +257,7 @@ void salt_overlap_plain16_avx2(BYTE * dseq,
     }
   }
 
+  // hand over results
   *psmscore = score;
   *overlaplen = len;
 }
