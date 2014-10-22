@@ -14,7 +14,7 @@ ARFLAGS = rvs
 
 PROG=salt
 VERSION=0.0.1
-SLIB = $(PROG).a.$(VERSION)
+SLIB = lib$(PROG).a
 
 DEPS=salt.h Makefile
 
