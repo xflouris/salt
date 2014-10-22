@@ -56,7 +56,7 @@ void args_init(int argc, char **argv)
   opt_list_reads    = 0;
   opt_overlap_file  = 0;
 
-  opt_algorithm     = strdup("CPU");
+  opt_algorithm     = xstrdup_aligned("CPU",8);
   opt_run_test      = 0;
   opt_runs          = 10;
   opt_reads_min_len = 150;
@@ -250,23 +250,23 @@ void cmd_overlap()
   long scorematrix_long[SCORE_MATRIX_SIZE*SCORE_MATRIX_SIZE] __attribute__((aligned(SALT_ALIGNMENT_MAX)));
   WORD scorematrix_word[SCORE_MATRIX_SIZE*SCORE_MATRIX_SIZE] __attribute__((aligned(SALT_ALIGNMENT_MAX)));
   char scorematrix_char[SCORE_MATRIX_SIZE*SCORE_MATRIX_SIZE] __attribute__((aligned(SALT_ALIGNMENT_MAX)));
-  int id;
+  salt_fasta_t * fd;
 
   long psmscore = 0, overlaplen = 0, matchcase = 0;
 
-  id = salt_fasta_open(opt_overlap_file);
+  fd = salt_fasta_open(opt_overlap_file);
 
   /* get first sequence */
-  salt_fasta_getnext(id, &head, &head_len,
+  salt_fasta_getnext(fd, &head, &head_len,
                      &seq[0], &seq_len[0], &qno, &qsize);
 
-  seq[0] = xstrdup(seq[0], SALT_ALIGNMENT_MAX);
+  seq[0] = xstrdup_aligned(seq[0], SALT_ALIGNMENT_MAX);
 
   /* get second sequence */
-  salt_fasta_getnext(id, &head, &head_len,
+  salt_fasta_getnext(fd, &head, &head_len,
                      &seq[1], &seq_len[1], &qno, &qsize);
 
-  seq[1] = xstrdup(seq[1], SALT_ALIGNMENT_MAX);
+  seq[1] = xstrdup_aligned(seq[1], SALT_ALIGNMENT_MAX);
 
   /* setup scoring matrix */
   init_scoring_matrices (scorematrix_long, scorematrix_word, scorematrix_char);
@@ -278,17 +278,17 @@ void cmd_overlap()
   convert(seq[0]);
   convert(seq[1]);
 
-  salt_overlap_plain(seq[0], seq[0] + seq_len[0],
-                     seq[1], seq[1] + seq_len[1],
-                     (long *)scorematrix_long,
-                     &psmscore,
-                     &overlaplen,
-                     &matchcase);
+  salt_overlap_nuc4(seq[0], seq[0] + seq_len[0],
+                    seq[1], seq[1] + seq_len[1],
+                    (long *)scorematrix_long,
+                    &psmscore,
+                    &overlaplen,
+                    &matchcase);
 
 
-  printf("\n CPU       : psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
+  printf("\nCPU       : psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
 
-  salt_overlap_sse_8bit((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
+  salt_overlap_nuc4_sse_8((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                           (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                           scorematrix_char,
                           &psmscore,
@@ -297,7 +297,7 @@ void cmd_overlap()
 
   printf("SSE   8bit: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
 
-  salt_overlap_sse_16bit((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
+  salt_overlap_nuc4_sse_16((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                            (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                            scorematrix_word,
                            &psmscore,
@@ -306,7 +306,7 @@ void cmd_overlap()
 
   printf("SSE  16bit: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
 
-  salt_overlap_avx2_16bit ((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
+  salt_overlap_nuc4_avx2_16((BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                             (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                             scorematrix_word,
                             &psmscore,
@@ -315,9 +315,10 @@ void cmd_overlap()
 
   printf("AVX2 16bit: psmscore: %ld, overlaplen: %ld, matchcase: %ld\n", psmscore, overlaplen, matchcase);
 
-  salt_fasta_close(id);
+  salt_fasta_close(fd);
 }
 
+/*
 void cmd_run_test ()
 {
     // get command line options
@@ -379,7 +380,7 @@ void cmd_run_test ()
     for (int i = 0; i < runs; i++) {
         // select algorithm and run it
         if (strcmp(opt_algorithm, "CPU") == 0) {
-            salt_overlap_plain(
+            salt_overlap_nuc4(
                 seq[0], seq[0] + seq_len[0],
                 seq[1], seq[1] + seq_len[1],
                 (long *)scorematrix_long,
@@ -388,7 +389,7 @@ void cmd_run_test ()
                 &matchcase
             );
         } else if (strcmp(opt_algorithm, "SSE8") == 0) {
-            salt_overlap_sse_8bit(
+            salt_overlap_nuc4_sse_8(
                 (BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                 (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                 scorematrix_char,
@@ -397,7 +398,7 @@ void cmd_run_test ()
                 &matchcase
             );
         } else if (strcmp(opt_algorithm, "SSE16") == 0) {
-            salt_overlap_sse_16bit(
+            salt_overlap_nuc4_sse_16(
                 (BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                 (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                 scorematrix_word,
@@ -406,7 +407,7 @@ void cmd_run_test ()
                 &matchcase
             );
         } else if (strcmp(opt_algorithm, "AVX8") == 0) {
-            salt_overlap_avx2_8bit(
+            salt_overlap_nuc4_avx2_8(
                 (BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                 (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                 scorematrix_char,
@@ -415,7 +416,7 @@ void cmd_run_test ()
                 &matchcase
             );
         } else if (strcmp(opt_algorithm, "AVX16") == 0) {
-            salt_overlap_avx2_16bit(
+            salt_overlap_nuc4_avx2_16(
                 (BYTE *)seq[0], (BYTE *)seq[0] + seq_len[0],
                 (BYTE *)seq[1], (BYTE *)seq[1] + seq_len[1],
                 scorematrix_word,
@@ -452,6 +453,7 @@ void cmd_run_test ()
     xfree (seq[0]);
     xfree (seq[1]);
 }
+*/
 
 void getentirecommandline(int argc, char ** argv)
 {
@@ -503,44 +505,26 @@ int main (int argc, char * argv[])
 
   show_header();
 
-  // print stuff for mapping
-//   int i;
-//   for (i=0; i<256; i++) {
-//     if (i%16==0) fprintf(stdout, "\n    ");
-//     if(i<33 || i>126) {
-//       fprintf(stdout, "0,  ");
-//     } else {
-//       fprintf(stdout, "%c,  ", i);
-//     }
-//   }
-//   fprintf(stdout, "\n\n");
-//
-
-  //score_chrmap_set(chrmap_5bit_aa);
-  //score_matrix_read_aa("../data/score_matrix");
-  //score_matrix_put();
-  //fprintf(stdout, "%lu\n", score_chr('A', 'C'));
-
   if (opt_help)
   {
     cmd_help();
   }
   else if (opt_list_reads)
   {
-    int id = salt_fasta_open(opt_list_reads);
-    while (salt_fasta_getnext(id, &head, &head_len,
+    salt_fasta_t * fd = salt_fasta_open(opt_list_reads);
+    while (salt_fasta_getnext(fd, &head, &head_len,
                               &seq, &seq_len, &qno, &qsize))
     {
       fprintf(stdout, "%s\n%s\n\n", head, seq);
     }
-    salt_fasta_close(id);
+    salt_fasta_close(fd);
   }
   else if (opt_overlap_file)
   {
     cmd_overlap();
-  } else if (opt_run_test) {
+  } /*else if (opt_run_test) {
       cmd_run_test();
-  }
+  }*/
 
   return (EXIT_SUCCESS);
 }

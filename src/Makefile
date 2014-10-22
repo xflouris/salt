@@ -9,23 +9,28 @@ CFLAGS=-g -std=c99 -O3 -mtune=core2 $(WARN) $(PROFILING)
 LINKFLAGS=-g
 #LIBS=-lpthread
 
+AR = ar
+ARFLAGS = rvs
+
 PROG=salt
+VERSION=0.0.1
+SLIB = $(PROG).a.$(VERSION)
 
 DEPS=salt.h Makefile
 
-OBJS=salt.o query.o util.o maps.o score.o popcount.o gen_test.o \
-overlap_plain.o overlap_sse_8bit.o overlap_sse_16bit.o overlap_avx2_8bit.o overlap_avx2_16bit.o
+OBJS=query.o util.o maps.o popcount.o overlap_nuc.o \
+overlap_nuc4_sse_8.o overlap_nuc4_sse_16.o overlap_nuc4_avx2_8.o \
+overlap_nuc4_avx2_16.o
 
 .SUFFIXES:.o .c
 
 %.o : %.c $(DEPS)
 	$(CC) $(CFLAGS) -mavx2 -c -o $@ $<
 
-all: $(PROG)
-	@echo "Done."
+all: $(SLIB)
 
-salt: $(OBJS)
-	$(CC) $(LINKFLAGS) -o $@ $(OBJS) $(LIBS)
+$(SLIB): $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(LIBS)
 
 clean:
 	rm -f *.o *~ $(PROG) gmon.out

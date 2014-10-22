@@ -60,14 +60,14 @@ static unsigned long darray_alloc = 0;
 static long * qarray;
 static long * darray;
 
-void salt_overlap_plain(char * dseq,
-                        char * dend,
-                        char * qseq,
-                        char * qend,
-                        long * score_matrix,
-                        long * psmscore,
-                        long * overlaplen,
-                        long * matchcase)
+void salt_overlap_nuc4(char * dseq,
+                       char * dend,
+                       char * qseq,
+                       char * qend,
+                       long * score_matrix,
+                       long * psmscore,
+                       long * overlaplen,
+                       long * matchcase)
 {
   long i, j, h, n, score, len = 0;
   long *qa, *da;

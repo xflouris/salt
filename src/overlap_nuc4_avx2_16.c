@@ -20,7 +20,6 @@
 */
 
 #include "salt.h"
-#define shft 3
 
 /*
 
@@ -63,28 +62,9 @@ static long qprofile_len = 0;
 static long ee_len       = 0;
 static long hh_len       = 0;
 
-//#ifdef DEBUG
-
-void pprint_avx16(__m256i x)
-{
-    short * p = (short *) & x;
-    for (int i = 0; i < 16; i++) {
-        printf("%04d ", *p++);
-        if ((i+1)%4==0) printf("  ");
-    }
-}
-
-void pshow_avx16(char * name, __m256i x)
-{
-  printf("%s: ", name);
-  pprint_avx16(x);
-  printf("\n");
-}
-//#endif
-
-static void qprofile_fill16_avx (WORD * score_matrix_word,
-                                 BYTE * qseq,
-                                 BYTE * qend)
+static void qprofile_fill16_avx(WORD * score_matrix_word,
+                                BYTE * qseq,
+                                BYTE * qend)
 {
   WORD * offset;
   long qlen = qend - qseq;
@@ -121,14 +101,15 @@ static void qprofile_fill16_avx_vec (WORD * score_matrix,
     long padded_len = roundup(qlen, SALT_ALIGNMENT_AVX);
 
     // make sure qprofile is big enough
-    if (padded_len > qprofile_len) {
+    if (padded_len > qprofile_len) 
+    {
         free (qprofile);
         qprofile     = xmalloc(4*padded_len*sizeof(char), SALT_ALIGNMENT_AVX);
         qprofile_len = padded_len;
     }
 
     // declare all needed register vars
-    __m256i xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5;
+    __m256i xmm0, xmm1, xmm2,  xmm3,  xmm4;
 
     // load scoring values for each letter
     // (only [31:0] are interesting, rest is garbage)
@@ -145,7 +126,8 @@ static void qprofile_fill16_avx_vec (WORD * score_matrix,
     xmm0 = _mm256_permute2f128_si256(xmm1, xmm2, 0x20);
 
     // loop over qseq to process it, jumping a vector size per iteration
-    for (long i = 0; i < padded_len; i += 32) {
+    for (long i = 0; i < padded_len; i += 32) 
+    {
         // load data of one vector size from qseq
         xmm0 = _mm256_load_si256 ((__m256i*) (qseq+i));
 
@@ -153,7 +135,7 @@ static void qprofile_fill16_avx_vec (WORD * score_matrix,
     }
 }
 
-void salt_overlap_avx2_16bit  (BYTE * dseq,
+void salt_overlap_nuc4_avx2_16(BYTE * dseq,
                                BYTE * dend,
                                BYTE * qseq,
                                BYTE * qend,

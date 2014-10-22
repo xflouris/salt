@@ -398,12 +398,12 @@ static void donormal8(BYTE * dseq, BYTE * qseq,
 }
 
 
-void salt_overlap_sse_8bit (BYTE * dseq, BYTE * dend,
-                              BYTE * qseq, BYTE * qend,
-                              char * score_matrix,
-                              long * psmscore,
-                              long * overlaplen,
-                              long * matchcase)
+void salt_overlap_nuc4_sse_8(BYTE * dseq, BYTE * dend,
+                             BYTE * qseq, BYTE * qend,
+                             char * score_matrix,
+                             long * psmscore,
+                             long * overlaplen,
+                             long * matchcase)
 {
   long len = 0;
   char score = 0;
@@ -490,7 +490,7 @@ void salt_overlap_sse_8bit (BYTE * dseq, BYTE * dend,
   *overlaplen = len;
 }
 
-void salt_overlap_sse2_8bit (BYTE * dseq, BYTE * dend,
+void salt_overlap_nuc4_sse2_8(BYTE * dseq, BYTE * dend,
                               BYTE * qseq, BYTE * qend,
                               char * score_matrix,
                               long * psmscore,

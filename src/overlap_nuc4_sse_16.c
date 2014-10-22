@@ -218,14 +218,14 @@ static void qprofile_fill16_sse(WORD * score_matrix_word,
 }
 #endif
 
-void salt_overlap_sse_16bit (BYTE * dseq,
-                               BYTE * dend,
-                               BYTE * qseq,
-                               BYTE * qend,
-                               WORD * score_matrix,
-                               long * psmscore,
-                               long * overlaplen,
-                               long * matchcase)
+void salt_overlap_nuc4_sse_16(BYTE * dseq,
+                              BYTE * dend,
+                              BYTE * qseq,
+                              BYTE * qend,
+                              WORD * score_matrix,
+                              long * psmscore,
+                              long * overlaplen,
+                              long * matchcase)
 {
   long len = 0;
   WORD score = 0;

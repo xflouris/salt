@@ -67,11 +67,6 @@ void * xrealloc(void *ptr, size_t size)
   return t;
 }
 
-void xfree (void* ptr)
-{
-    free(ptr);
-}
-
 char * xstrchrnul(char *s, int c)
 {
   char * r = strchr(s, c);
@@ -82,8 +77,7 @@ char * xstrchrnul(char *s, int c)
     return (char *)s + strlen(s);
 }
 
-/* TODO: separate it into xstrdup and xstrdup_aligned */
-void * xstrdup(char * s, size_t alignment)
+void * xstrdup_aligned(char * s, size_t alignment)
 {
   int len = strlen(s);
   //char * x = xmalloc(len+1, 8);
@@ -95,15 +89,4 @@ void * xstrdup(char * s, size_t alignment)
     x[i] = 0;
 
   return x;
-}
-
-char* strdup(const char *str)
-{
-    int n = strlen(str) + 1;
-    char *dup = malloc(n * sizeof(char));
-    if(dup)
-    {
-        strcpy(dup, str);
-    }
-    return dup;
 }
